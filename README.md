@@ -57,6 +57,33 @@ To access your earned NIGHT tokens, you will need to import your wallets' signin
     *   Go to `Add Wallet` -> `More` -> `CLI Signing Keys`.
     *   Import the `.skey` files generated in the `skeys/` directory.
 
+## Dashboard
+
+The dashboard displays important information about the status of each worker. The `Challenge` column shows which challenge ID the worker is trying to solve. `Completed` shows how many solutions have been sucessfully submitted (and verified) by the server. `NIGHT` is an estimation of the rewards each wallet will receive. This is updated every 24 hours.
+
+```
+==============================================================================================================
+                                    MIDNIGHT MULTI-WALLET MINER DASHBOARD                                     
+==============================================================================================================
+Active Workers: 6 | Last Update: 2025-11-03 19:22:11
+==============================================================================================================
+
+ID   Address                                      Challenge            Attempts   H/s      Completed  NIGHT     
+--------------------------------------------------------------------------------------------------------------
+0    addr1vxask5vpp8p4xddsc3qd63luy4ecf67233...   **D05C02             470,000    204      4          0         
+1    addr1v43qjfemmksg5yjysevyndfqs7zpmad8yy...   **D05C19             471,000    204      8          7.043     
+2    addr1v9hcpxeevkks7g4mvyls029yuvvsm0dfzl...   **D05C20             48,000     203      5          0         
+3    addr1vx64c8703ketwnjtxkjcqzsktwkcvhve7f...   **D05C20             154,000    203      7          3.522     
+4    addr1vxh3ckvkena0hzm24fhj9ac9ezrjz5ufju...   **D05C03             20,000     203      5          0         
+5    addr1v8ugwtuwyqwh42ejd5af6f5tvzpjt4m5r2...   **D05C18             316,000    203      2          0         
+--------------------------------------------------------------------------------------------------------------
+TOTAL                                                                              1221     31         10.565    
+==============================================================================================================
+
+Press Ctrl+C to stop all miners
+
+
+
 ## Disclaimer
 
 This is an unofficial tool. Use it at your own risk. The security of your wallet is your responsibility. Ensure you keep your wallet files (`*.json`) safe and private, and never share your `.skey` files. They contain the private keys required to access any earned tokens.
