@@ -20,6 +20,8 @@ import json
 import os
 import sys
 import threading
+import fcntl
+import logging
 from multiprocessing import Process, Queue, Manager
 from urllib.parse import quote
 from wasmtime import Store, Module, Instance, Func, FuncType, ValType
@@ -27,33 +29,85 @@ from pycardano import PaymentSigningKey, PaymentVerificationKey, Address, Networ
 import cbor2
 
 
+# Configure logging
+def setup_logging():
+    """Setup file and console logging"""
+    log_format = '%(asctime)s - %(levelname)s - [%(processName)s] - %(message)s'
+    date_format = '%Y-%m-%d %H:%M:%S'
+
+    # Create logger
+    logger = logging.getLogger('midnight_miner')
+    logger.setLevel(logging.INFO)
+
+    # Check if handlers already exist (to avoid duplicates in forked processes)
+    if logger.handlers:
+        return logger
+
+    # File handler
+    file_handler = logging.FileHandler('miner.log')
+    file_handler.setLevel(logging.INFO)
+    file_handler.setFormatter(logging.Formatter(log_format, date_format))
+
+    # Console handler (only warnings and errors)
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.WARNING)
+    console_handler.setFormatter(logging.Formatter(log_format, date_format))
+
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+
+    return logger
+
+
 class ChallengeTracker:
-    """Manages challenge tracking and completion status"""
+    """Manages challenge tracking and completion status with cross-process file locking"""
 
     def __init__(self, challenges_file="challenges.json"):
         self.challenges_file = challenges_file
-        self.lock = threading.Lock()
-        self._load_challenges()
+        # Ensure file exists
+        if not os.path.exists(self.challenges_file):
+            with open(self.challenges_file, 'w') as f:
+                json.dump({}, f)
 
-    def _load_challenges(self):
-        """Load challenges from file"""
-        if os.path.exists(self.challenges_file):
-            with open(self.challenges_file, 'r') as f:
-                self.challenges = json.load(f)
-        else:
-            self.challenges = {}
+    def _locked_operation(self, modify_func):
+        """
+        Perform atomic read-modify-write with file locking.
 
-    def _save_challenges(self):
-        """Save challenges to file"""
-        with open(self.challenges_file, 'w') as f:
-            json.dump(self.challenges, f, indent=2)
+        Args:
+            modify_func: Function that takes challenges dict and returns (modified_dict, result)
+
+        Returns:
+            The result from modify_func
+        """
+        with open(self.challenges_file, 'r+') as f:
+            # Get exclusive lock - blocks until available
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+            try:
+                # Read current state
+                f.seek(0)
+                content = f.read()
+                challenges = json.loads(content) if content else {}
+
+                # Perform modification
+                modified_challenges, result = modify_func(challenges)
+
+                # Write back atomically
+                f.seek(0)
+                f.truncate()
+                json.dump(modified_challenges, f, indent=2)
+                f.flush()
+                os.fsync(f.fileno())
+
+                return result
+            finally:
+                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
     def register_challenge(self, challenge):
         """Register a new challenge with all data needed to solve it"""
-        with self.lock:
+        def modify(challenges):
             challenge_id = challenge['challenge_id']
-            if challenge_id not in self.challenges:
-                self.challenges[challenge_id] = {
+            if challenge_id not in challenges:
+                challenges[challenge_id] = {
                     'challenge_id': challenge['challenge_id'],
                     'day': challenge.get('day'),
                     'challenge_number': challenge.get('challenge_number'),
@@ -64,34 +118,40 @@ class ChallengeTracker:
                     'discovered_at': datetime.now(timezone.utc).isoformat(),
                     'solved_by': []
                 }
-                self._save_challenges()
-                return True
-            return False
+                return (challenges, True)
+            return (challenges, False)
+
+        return self._locked_operation(modify)
 
     def mark_solved(self, challenge_id, wallet_address):
         """Mark a challenge as solved by a wallet"""
-        with self.lock:
-            if challenge_id in self.challenges:
-                if wallet_address not in self.challenges[challenge_id]['solved_by']:
-                    self.challenges[challenge_id]['solved_by'].append(wallet_address)
-                    self._save_challenges()
-                    return True
-            return False
+        def modify(challenges):
+            if challenge_id in challenges:
+                if wallet_address not in challenges[challenge_id]['solved_by']:
+                    challenges[challenge_id]['solved_by'].append(wallet_address)
+                    return (challenges, True)
+            return (challenges, False)
+
+        return self._locked_operation(modify)
 
     def is_solved_by(self, challenge_id, wallet_address):
         """Check if wallet has already solved this challenge"""
-        with self.lock:
-            if challenge_id in self.challenges:
-                return wallet_address in self.challenges[challenge_id]['solved_by']
-            return False
+        def check(challenges):
+            if challenge_id in challenges:
+                result = wallet_address in challenges[challenge_id]['solved_by']
+            else:
+                result = False
+            return (challenges, result)
+
+        return self._locked_operation(check)
 
     def get_unsolved_challenge(self, wallet_address):
         """Get an unsolved challenge for this wallet (prioritize newest)"""
-        with self.lock:
+        def find_challenge(challenges):
             now = datetime.now(timezone.utc)
             candidates = []
 
-            for challenge_id, data in self.challenges.items():
+            for challenge_id, data in challenges.items():
                 # Check if not solved by this wallet
                 if wallet_address not in data['solved_by']:
                     # Check if deadline hasn't passed
@@ -104,22 +164,29 @@ class ChallengeTracker:
                         })
 
             if not candidates:
-                return None
+                result = None
+            else:
+                # Sort by newest first (most time remaining)
+                candidates.sort(key=lambda x: x['time_left'], reverse=True)
+                result = candidates[0]['challenge']
 
-            # Sort by newest first (most time remaining)
-            candidates.sort(key=lambda x: x['time_left'], reverse=True)
-            return candidates[0]['challenge']
+            return (challenges, result)
+
+        return self._locked_operation(find_challenge)
 
     def get_challenge_stats(self):
         """Get overall challenge statistics"""
-        with self.lock:
-            total_challenges = len(self.challenges)
-            solved_count = sum(1 for c in self.challenges.values() if len(c['solved_by']) > 0)
-            return {
+        def calculate_stats(challenges):
+            total_challenges = len(challenges)
+            solved_count = sum(1 for c in challenges.values() if len(c['solved_by']) > 0)
+            stats = {
                 'total': total_challenges,
                 'solved': solved_count,
                 'unsolved': total_challenges - solved_count
             }
+            return (challenges, stats)
+
+        return self._locked_operation(calculate_stats)
 
 
 class WalletManager:
@@ -333,6 +400,10 @@ class MinerWorker:
         self.api_base = api_base
         self.status_dict = status_dict
         self.challenge_tracker = challenge_tracker
+        self.logger = logging.getLogger('midnight_miner')
+
+        # Short address for logging
+        self.short_addr = self.address[:20] + "..."
 
         # Initialize status
         self.status_dict[worker_id] = {
@@ -351,14 +422,18 @@ class MinerWorker:
         try:
             response = requests.post(url, json={})
             response.raise_for_status()
+            self.logger.info(f"Worker {self.worker_id} ({self.short_addr}): Wallet registered successfully")
             return True
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 400:
                 error_msg = e.response.json().get('message', '')
                 if 'already' in error_msg.lower():
+                    self.logger.info(f"Worker {self.worker_id} ({self.short_addr}): Wallet already registered")
                     return True
+            self.logger.error(f"Worker {self.worker_id} ({self.short_addr}): Registration failed - {e}")
             return False
-        except:
+        except Exception as e:
+            self.logger.error(f"Worker {self.worker_id} ({self.short_addr}): Registration error - {e}")
             return False
 
     def get_current_challenge(self):
@@ -415,8 +490,14 @@ class MinerWorker:
             response = requests.post(url, json={})
             response.raise_for_status()
             data = response.json()
-            return data.get("crypto_receipt") is not None
-        except:
+            success = data.get("crypto_receipt") is not None
+            if success:
+                self.logger.info(f"Worker {self.worker_id} ({self.short_addr}): Solution ACCEPTED for challenge {challenge['challenge_id']}")
+            else:
+                self.logger.warning(f"Worker {self.worker_id} ({self.short_addr}): Solution REJECTED for challenge {challenge['challenge_id']} - No receipt")
+            return success
+        except Exception as e:
+            self.logger.warning(f"Worker {self.worker_id} ({self.short_addr}): Solution REJECTED for challenge {challenge['challenge_id']} - {e}")
             return False
 
     def mine_challenge(self, challenge, ashmaize, rom_ptr, max_time=3600):
@@ -456,6 +537,7 @@ class MinerWorker:
     def run(self):
         """Main worker loop"""
         self.update_status(current_challenge='Initializing...')
+        self.logger.info(f"Worker {self.worker_id} ({self.short_addr}): Starting mining worker")
 
         if not self.register_wallet():
             self.update_status(current_challenge='Registration failed')
@@ -471,7 +553,9 @@ class MinerWorker:
                 # Get current challenge from API and register it
                 api_challenge = self.get_current_challenge()
                 if api_challenge:
-                    self.challenge_tracker.register_challenge(api_challenge)
+                    is_new = self.challenge_tracker.register_challenge(api_challenge)
+                    if is_new:
+                        self.logger.info(f"Worker {self.worker_id} ({self.short_addr}): Discovered new challenge {api_challenge['challenge_id']}")
 
                 # Find an unsolved challenge for this wallet
                 challenge = self.challenge_tracker.get_unsolved_challenge(self.address)
@@ -490,6 +574,7 @@ class MinerWorker:
                 if time_left <= 0:
                     # Mark as expired (skip it)
                     self.challenge_tracker.mark_solved(challenge_id, self.address)
+                    self.logger.info(f"Worker {self.worker_id} ({self.short_addr}): Challenge {challenge_id} expired")
                     self.update_status(current_challenge='Challenge expired')
                     time.sleep(5)
                     continue
@@ -498,6 +583,7 @@ class MinerWorker:
                 no_pre_mine = challenge["no_pre_mine"]
                 if no_pre_mine not in rom_cache:
                     self.update_status(current_challenge=f'Building ROM for {challenge_id[:10]}...')
+                    self.logger.info(f"Worker {self.worker_id} ({self.short_addr}): Building ROM for challenge {challenge_id}")
                     rom_cache[no_pre_mine] = ashmaize.build_rom(no_pre_mine)
 
                 rom_ptr = rom_cache[no_pre_mine]
@@ -507,11 +593,15 @@ class MinerWorker:
                     self.update_statistics()
                     last_stats_update = time.time()
 
+                # Log start of mining
+                self.logger.info(f"Worker {self.worker_id} ({self.short_addr}): Starting work on challenge {challenge_id} (time left: {time_left/3600:.1f}h)")
+
                 # Mine the challenge
                 max_mine_time = min(time_left * 0.8, 3600)
                 nonce = self.mine_challenge(challenge, ashmaize, rom_ptr, max_time=max_mine_time)
 
                 if nonce:
+                    self.logger.info(f"Worker {self.worker_id} ({self.short_addr}): Found solution for challenge {challenge_id}, submitting...")
                     self.update_status(current_challenge='Submitting solution...')
                     if self.submit_solution(challenge, nonce):
                         # Mark as solved
@@ -525,12 +615,15 @@ class MinerWorker:
                 else:
                     # Failed to find solution in time, mark as attempted
                     self.challenge_tracker.mark_solved(challenge_id, self.address)
+                    self.logger.info(f"Worker {self.worker_id} ({self.short_addr}): No solution found for challenge {challenge_id} within time limit")
                     self.update_status(current_challenge='No solution found')
                     time.sleep(5)
 
             except KeyboardInterrupt:
+                self.logger.info(f"Worker {self.worker_id} ({self.short_addr}): Received stop signal")
                 break
             except Exception as e:
+                self.logger.error(f"Worker {self.worker_id} ({self.short_addr}): Error - {e}")
                 self.update_status(current_challenge=f'Error: {str(e)[:30]}')
                 time.sleep(60)
 
@@ -538,11 +631,16 @@ class MinerWorker:
 def worker_process(wallet_data, worker_id, status_dict, challenges_file):
     """Process entry point for worker"""
     try:
+        # Setup logging for this worker process
+        setup_logging()
+
         # Each process needs its own ChallengeTracker instance
         challenge_tracker = ChallengeTracker(challenges_file)
         worker = MinerWorker(wallet_data, worker_id, status_dict, challenge_tracker)
         worker.run()
     except Exception as e:
+        logger = logging.getLogger('midnight_miner')
+        logger.error(f"Worker {worker_id}: Fatal error - {e}")
         import traceback
         traceback.print_exc()
 
@@ -637,10 +735,17 @@ def display_dashboard(status_dict, num_workers, stats_update_interval=600):
 
 def main():
     """Main entry point"""
+    # Setup logging first
+    logger = setup_logging()
+
     print("="*70)
     print("MIDNIGHT MULTI-WALLET SCAVENGER MINE BOT")
     print("="*70)
     print()
+
+    logger.info("="*70)
+    logger.info("Midnight Miner starting up")
+    logger.info("="*70)
 
     # Parse arguments
     num_workers = 1
@@ -665,15 +770,19 @@ def main():
     print(f"  Challenges file: {challenges_file}")
     print()
 
+    logger.info(f"Configuration: workers={num_workers}, wallets_file={wallets_file}, challenges_file={challenges_file}")
+
     # Check WASM file
     if not os.path.exists("ashmaize_web_bg.wasm"):
         print("❌ Error: ashmaize_web_bg.wasm not found")
+        logger.error("WASM file not found: ashmaize_web_bg.wasm")
         return 1
 
     # Setup wallets
     wallet_manager = WalletManager(wallets_file)
     api_base = "https://scavenger.prod.gd.midnighttge.io/"
     wallets = wallet_manager.load_or_create_wallets(num_workers, api_base)
+    logger.info(f"Loaded/created {num_workers} wallets")
 
     print()
     print("="*70)
@@ -691,11 +800,13 @@ def main():
         p = Process(target=worker_process, args=(wallet, i, status_dict, challenges_file))
         p.start()
         processes.append(p)
+        logger.info(f"Started worker process {i} for wallet {wallet['address'][:20]}...")
         time.sleep(1)  # Stagger startup
 
     print("\n" + "="*70)
     print("All workers started. Starting dashboard...")
     print("="*70)
+    logger.info(f"All {num_workers} workers started successfully")
     time.sleep(3)
 
     # Start dashboard in main thread
@@ -703,6 +814,7 @@ def main():
         display_dashboard(status_dict, num_workers)
     except KeyboardInterrupt:
         print("\n\nStopping all miners...")
+        logger.info("Received shutdown signal, stopping all workers...")
 
     # Cleanup
     for p in processes:
@@ -712,6 +824,7 @@ def main():
         p.join(timeout=5)
 
     print("\n✓ All miners stopped")
+    logger.info("All workers stopped")
 
     # Show final challenge statistics
     tracker = ChallengeTracker(challenges_file)
@@ -720,6 +833,9 @@ def main():
     print(f"  Total challenges discovered: {stats['total']}")
     print(f"  Challenges with solutions: {stats['solved']}")
     print(f"  Unsolved challenges: {stats['unsolved']}")
+
+    logger.info(f"Final statistics: {stats['total']} challenges, {stats['solved']} with solutions, {stats['unsolved']} unsolved")
+    logger.info("Midnight Miner shutdown complete")
 
     return 0
 
