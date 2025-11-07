@@ -115,6 +115,7 @@ echo ========================================
 echo    Installation Complete!
 echo ========================================
 echo.
+cd ..
 pause
 goto MENU
 
@@ -135,6 +136,7 @@ echo Pulling latest updates from GitHub...
 git pull
 echo.
 echo Update complete!
+cd ..
 pause
 goto MENU
 
@@ -167,6 +169,7 @@ echo Installing Python and dependencies...
 powershell -ExecutionPolicy Bypass -Command "$env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User'); uv python install 3.13; uv pip install --system -r requirements.txt"
 echo.
 echo Dependencies installed!
+cd ..
 pause
 goto MENU
 
