@@ -26,19 +26,49 @@ The miner operates by performing the following steps:
 
 Before running the miner, ensure you have the following:
 
-1.  **Python 3**: The script is written in Python (version 3.8 or higher recommended).
-2.  **Required Libraries**: Install the necessary Python packages using pip:
-    ```bash
-    pip install requests pycardano cbor2 portalocker
-    ```
-3. **Git**: Use Git to download and update your Miner easily.
+1.  **Git**: Use Git to download and update your Miner easily.
+2.  **Python 3**: The script is written in Python (version 3.8 or higher recommended).
 
-## Download
+## Installation
 
-Run this command to download MidnightMiner
+### Quick Setup with UV (Recommended - 10-30x Faster!)
+
+**Using UV for blazingly fast installation:**
+
+```powershell
+# Clone the repository
+git clone https://github.com/rickachiu/NightMiner.git
+cd NightMiner
+
+# Run automated setup (installs UV, Python, and all dependencies)
+.\setup_with_uv.ps1
 ```
-git clone https://github.com/djeanql/MidnightMiner && cd MidnightMiner
+
+See `SETUP_GUIDE.md` for detailed instructions and troubleshooting.
+
+### Traditional Installation
+
+Install the required Python packages using pip:
+```bash
+pip install requests pycardano cbor2 portalocker wasmtime
 ```
+
+Or use the requirements file:
+```bash
+pip install -r requirements.txt
+```
+
+## Windows Background Mining
+
+This fork includes Windows-specific scripts to run the miner in the background without visible terminal windows:
+
+- **`run_miner_hidden.vbs`** - Double-click to start mining hidden (16 workers by default)
+- **`run_miner_background.ps1`** - PowerShell background runner
+- **`check_miner_status.ps1`** - Check mining status and stats
+- **`stop_miner.ps1`** - Stop all mining processes
+- **`install_startup.ps1`** - Add miner to Windows startup (auto-start on boot)
+
+See `BACKGROUND_MINING.md` for complete documentation on background mining.
 
 ### Mac OS
 
