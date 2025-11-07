@@ -7,40 +7,37 @@ echo ========================================
 echo.
 echo Choose an option:
 echo.
-echo   1. Fresh Install (Clone + Setup + Start)
-echo   2. Update Existing Installation
-echo   3. Just Install Dependencies (if already cloned)
-echo   4. Start Mining (3 workers)
-echo   5. Check Mining Status
-echo   6. Stop Mining
+echo   1. Clone from GitHub (git clone)
+echo   2. Fresh Install (Setup + Start)
+echo   3. Update Existing Installation
+echo   4. Just Install Dependencies
+echo   5. Start Mining (3 workers)
+echo   6. Check Mining Status
+echo   7. Stop Mining
 echo   0. Exit
 echo.
 echo ========================================
-set /p choice="Enter your choice (0-6): "
+set /p choice="Enter your choice (0-7): "
 
 if "%choice%"=="0" goto END
-if "%choice%"=="1" goto FRESH_INSTALL
-if "%choice%"=="2" goto UPDATE
-if "%choice%"=="3" goto INSTALL_DEPS
-if "%choice%"=="4" goto START_MINING
-if "%choice%"=="5" goto CHECK_STATUS
-if "%choice%"=="6" goto STOP_MINING
+if "%choice%"=="1" goto CLONE_REPO
+if "%choice%"=="2" goto FRESH_INSTALL
+if "%choice%"=="3" goto UPDATE
+if "%choice%"=="4" goto INSTALL_DEPS
+if "%choice%"=="5" goto START_MINING
+if "%choice%"=="6" goto CHECK_STATUS
+if "%choice%"=="7" goto STOP_MINING
 echo Invalid choice! Please try again.
 timeout /t 2 >nul
 goto MENU
 
-:FRESH_INSTALL
+:CLONE_REPO
 cls
 echo ========================================
-echo    Fresh Installation
+echo    Clone from GitHub
 echo ========================================
 echo.
-echo [1/6] Unblocking PowerShell scripts...
-powershell -ExecutionPolicy Bypass -Command "Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force; Get-ChildItem *.ps1 -ErrorAction SilentlyContinue | Unblock-File"
-echo     Scripts unblocked!
-
-echo.
-echo [2/6] Checking for Git...
+echo Checking for Git...
 where git >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
     echo ERROR: Git is not installed!
@@ -48,20 +45,52 @@ if %ERRORLEVEL% NEQ 0 (
     pause
     goto MENU
 )
-echo     Git found!
+echo Git found!
 
 echo.
-echo [3/6] Cloning NightMiner repository...
 if exist NightMiner (
-    echo     Repository already exists! Use option 2 to update instead.
+    echo WARNING: NightMiner folder already exists!
+    echo Please delete it first or use option 3 to update.
     pause
     goto MENU
 )
+
+echo Cloning NightMiner repository from GitHub...
 git clone https://github.com/rickachiu/NightMiner.git
+echo.
+if exist NightMiner (
+    echo Clone successful!
+    echo.
+    echo Next steps:
+    echo   - Run option 2 (Fresh Install) to setup and start
+    echo   - Or run option 4 (Just Install Dependencies)
+) else (
+    echo Clone failed! Please check your internet connection.
+)
+echo.
+pause
+goto MENU
+
+:FRESH_INSTALL
+cls
+echo ========================================
+echo    Fresh Installation (Setup + Start)
+echo ========================================
+echo.
+if not exist NightMiner (
+    echo ERROR: NightMiner folder not found!
+    echo Please run option 1 (Clone from GitHub) first.
+    pause
+    goto MENU
+)
 cd NightMiner
 
+echo [1/5] Unblocking PowerShell scripts...
+powershell -ExecutionPolicy Bypass -Command "Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force; Get-ChildItem *.ps1 -ErrorAction SilentlyContinue | Unblock-File"
+echo     Scripts unblocked!
+
 echo.
-echo [4/6] Checking for UV...
+echo [2/5] Checking for UV...
 where uv >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
     echo     UV not found, installing...
@@ -74,11 +103,11 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo.
-echo [5/6] Installing Python and dependencies...
+echo [3/5] Installing Python and dependencies...
 powershell -ExecutionPolicy Bypass -Command "$env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User'); uv python install 3.13; uv pip install --system -r requirements.txt"
 
 echo.
-echo [6/6] Starting miner in background...
+echo [4/5] Starting miner in background...
 powershell -ExecutionPolicy Bypass -File run_miner_background.ps1
 
 echo.
