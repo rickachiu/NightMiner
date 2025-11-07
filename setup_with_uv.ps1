@@ -16,11 +16,13 @@ if (-not $uvInstalled) {
         $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
         
         Write-Host "✓ UV installed successfully!`n" -ForegroundColor Green
-    } catch {
+    }
+    catch {
         Write-Host "✗ Failed to install UV. Please install manually from: https://docs.astral.sh/uv/" -ForegroundColor Red
         exit 1
     }
-} else {
+}
+else {
     Write-Host "[1/4] UV already installed ✓`n" -ForegroundColor Green
 }
 
@@ -29,7 +31,8 @@ Write-Host "[2/4] Installing Python 3.13 via UV..." -ForegroundColor Green
 try {
     uv python install 3.13
     Write-Host "✓ Python 3.13 installed!`n" -ForegroundColor Green
-} catch {
+}
+catch {
     Write-Host "! Python may already be installed, continuing...`n" -ForegroundColor Yellow
 }
 
@@ -38,7 +41,8 @@ Write-Host "[3/4] Installing dependencies (FAST with UV)..." -ForegroundColor Gr
 try {
     uv pip install -r requirements.txt
     Write-Host "✓ All dependencies installed!`n" -ForegroundColor Green
-} catch {
+}
+catch {
     Write-Host "✗ Failed to install dependencies" -ForegroundColor Red
     exit 1
 }
@@ -55,7 +59,8 @@ foreach ($pkg in $packages) {
     $check = uv pip list | Select-String -Pattern $pkg
     if ($check) {
         Write-Host "✓ $pkg installed" -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "✗ $pkg NOT installed" -ForegroundColor Red
         $allInstalled = $false
     }
@@ -70,7 +75,8 @@ if ($allInstalled) {
     Write-Host "  • Or run: .\run_miner_background.ps1" -ForegroundColor White
     Write-Host "`nTo check status: .\check_miner_status.ps1" -ForegroundColor White
     Write-Host "To stop mining: .\stop_miner.ps1" -ForegroundColor White
-} else {
+}
+else {
     Write-Host "`n✗ Some packages failed to install. Please check errors above." -ForegroundColor Red
 }
 
