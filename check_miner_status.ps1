@@ -38,21 +38,62 @@ Write-Host "`n=== Mining Statistics ===" -ForegroundColor Cyan
 if (Test-Path "solutions.csv") {
     $solutions = Import-Csv "solutions.csv"
     $solutionCount = $solutions.Count
-    Write-Host "Total Solutions: $solutionCount" -ForegroundColor Green
+    Write-Host "Total Solutions Submitted: $solutionCount" -ForegroundColor Green
     
     if ($solutionCount -gt 0) {
+        # Count accepted vs rejected
+        $accepted = ($solutions | Where-Object { $_.status -eq "accepted" }).Count
+        $rejected = ($solutions | Where-Object { $_.status -eq "rejected" }).Count
+        $pending = $solutionCount - $accepted - $rejected
+        
+        Write-Host "  Accepted: $accepted" -ForegroundColor Green
+        if ($rejected -gt 0) {
+            Write-Host "  Rejected: $rejected" -ForegroundColor Red
+        }
+        if ($pending -gt 0) {
+            Write-Host "  Pending: $pending" -ForegroundColor Yellow
+        }
+        
         $lastSolution = $solutions[-1]
-        Write-Host "Last Solution: $($lastSolution.timestamp)" -ForegroundColor White
+        Write-Host "`nLast Solution: $($lastSolution.timestamp)" -ForegroundColor White
         Write-Host "Last Challenge: $($lastSolution.challenge)" -ForegroundColor White
+        Write-Host "Last Status: $($lastSolution.status)" -ForegroundColor $(if ($lastSolution.status -eq "accepted") { "Green" } elseif ($lastSolution.status -eq "rejected") { "Red" } else { "Yellow" })
     }
     
-    # Estimate NIGHT tokens (approximate - actual may vary)
+    # Estimate NIGHT tokens (based on accepted solutions only)
     # Typical rewards range from 0.1 to 1 NIGHT per solution
-    $estimatedMin = [math]::Round($solutionCount * 0.1, 2)
-    $estimatedMax = [math]::Round($solutionCount * 1.0, 2)
-    Write-Host "Estimated NIGHT*: $estimatedMin - $estimatedMax" -ForegroundColor Yellow
+    if ($accepted -gt 0) {
+        $estimatedMin = [math]::Round($accepted * 0.1, 2)
+        $estimatedMax = [math]::Round($accepted * 1.0, 2)
+        Write-Host "`nEstimated NIGHT*: $estimatedMin - $estimatedMax" -ForegroundColor Yellow
+    } else {
+        Write-Host "`nEstimated NIGHT*: 0.00 (no accepted solutions yet)" -ForegroundColor Yellow
+    }
     Write-Host "*Actual rewards vary by challenge difficulty and network conditions" -ForegroundColor DarkGray
     Write-Host "*Balances update every 24h on Midnight Network" -ForegroundColor DarkGray
+    
+    # Per-wallet breakdown
+    Write-Host "`n=== Per-Wallet Statistics ===" -ForegroundColor Cyan
+    $walletStats = $solutions | Group-Object -Property wallet | Sort-Object Count -Descending
+    
+    foreach ($wallet in $walletStats) {
+        $walletAddr = $wallet.Name
+        $walletSolutions = $wallet.Group
+        $walletAccepted = ($walletSolutions | Where-Object { $_.status -eq "accepted" }).Count
+        $walletRejected = ($walletSolutions | Where-Object { $_.status -eq "rejected" }).Count
+        $walletPending = $walletSolutions.Count - $walletAccepted - $walletRejected
+        
+        # Truncate address for display
+        $shortAddr = $walletAddr.Substring(0, [Math]::Min(25, $walletAddr.Length)) + "..."
+        
+        Write-Host "`n$shortAddr" -ForegroundColor White
+        Write-Host "  Total: $($walletSolutions.Count) | Accepted: $walletAccepted | Rejected: $walletRejected" -ForegroundColor $(if ($walletAccepted -gt 0) { "Green" } else { "Yellow" })
+        
+        # Estimate NIGHT for this wallet
+        $walletEstMin = [math]::Round($walletAccepted * 0.1, 2)
+        $walletEstMax = [math]::Round($walletAccepted * 1.0, 2)
+        Write-Host "  Est. NIGHT: $walletEstMin - $walletEstMax" -ForegroundColor Yellow
+    }
 }
 else {
     Write-Host "No solutions found yet" -ForegroundColor Yellow
