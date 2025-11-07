@@ -31,6 +31,39 @@ else {
     Write-Host "Status: NOT RUNNING" -ForegroundColor Red
 }
 
+# Mining Statistics
+Write-Host "`n=== Mining Statistics ===" -ForegroundColor Cyan
+
+# Check solutions
+if (Test-Path "solutions.csv") {
+    $solutions = Import-Csv "solutions.csv"
+    $solutionCount = $solutions.Count
+    Write-Host "Total Solutions: $solutionCount" -ForegroundColor Green
+    
+    if ($solutionCount -gt 0) {
+        $lastSolution = $solutions[-1]
+        Write-Host "Last Solution: $($lastSolution.timestamp)" -ForegroundColor White
+        Write-Host "Last Challenge: $($lastSolution.challenge)" -ForegroundColor White
+    }
+    
+    # Estimate NIGHT tokens (approximate - actual may vary)
+    # Typical rewards range from 0.1 to 1 NIGHT per solution
+    $estimatedMin = [math]::Round($solutionCount * 0.1, 2)
+    $estimatedMax = [math]::Round($solutionCount * 1.0, 2)
+    Write-Host "Estimated NIGHT*: $estimatedMin - $estimatedMax" -ForegroundColor Yellow
+    Write-Host "*Actual rewards vary by challenge difficulty and network conditions" -ForegroundColor DarkGray
+    Write-Host "*Balances update every 24h on Midnight Network" -ForegroundColor DarkGray
+}
+else {
+    Write-Host "No solutions found yet" -ForegroundColor Yellow
+}
+
+# Check wallets
+if (Test-Path "wallets.json") {
+    $wallets = Get-Content "wallets.json" | ConvertFrom-Json
+    Write-Host "`nTotal Wallets: $($wallets.Count)" -ForegroundColor Cyan
+}
+
 # Check log file
 if (Test-Path "miner.log") {
     Write-Host "`n=== Latest Log Entries ===" -ForegroundColor Cyan
