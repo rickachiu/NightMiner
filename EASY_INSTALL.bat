@@ -35,7 +35,12 @@ echo ========================================
 echo    Fresh Installation
 echo ========================================
 echo.
-echo [1/5] Checking for Git...
+echo [1/6] Unblocking PowerShell scripts...
+powershell -ExecutionPolicy Bypass -Command "Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force; Get-ChildItem *.ps1 -ErrorAction SilentlyContinue | Unblock-File"
+echo     Scripts unblocked!
+
+echo.
+echo [2/6] Checking for Git...
 where git >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
     echo ERROR: Git is not installed!
@@ -46,7 +51,7 @@ if %ERRORLEVEL% NEQ 0 (
 echo     Git found!
 
 echo.
-echo [2/5] Cloning NightMiner repository...
+echo [3/6] Cloning NightMiner repository...
 if exist NightMiner (
     echo     Repository already exists! Use option 2 to update instead.
     pause
@@ -56,7 +61,7 @@ git clone https://github.com/rickachiu/NightMiner.git
 cd NightMiner
 
 echo.
-echo [3/5] Checking for UV...
+echo [4/6] Checking for UV...
 where uv >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
     echo     UV not found, installing...
@@ -69,11 +74,11 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo.
-echo [4/5] Installing Python and dependencies...
+echo [5/6] Installing Python and dependencies...
 powershell -ExecutionPolicy Bypass -Command "$env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User'); uv python install 3.13; uv pip install --system -r requirements.txt"
 
 echo.
-echo [5/5] Starting miner in background...
+echo [6/6] Starting miner in background...
 powershell -ExecutionPolicy Bypass -File run_miner_background.ps1
 
 echo.
