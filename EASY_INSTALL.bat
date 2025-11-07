@@ -176,14 +176,18 @@ echo ========================================
 echo    Starting Mining
 echo ========================================
 echo.
-if not exist NightMiner (
-    echo ERROR: NightMiner folder not found!
-    pause
-    goto MENU
+if exist NightMiner (
+    cd NightMiner
+    echo Starting miner with 3 workers (balanced mode)...
+    powershell -ExecutionPolicy Bypass -File run_miner_background.ps1
+    cd ..
+) else if exist run_miner_background.ps1 (
+    echo Starting miner with 3 workers (balanced mode)...
+    powershell -ExecutionPolicy Bypass -File run_miner_background.ps1
+) else (
+    echo ERROR: Cannot find run_miner_background.ps1
+    echo Please ensure you're in the correct directory.
 )
-cd NightMiner
-echo Starting miner with 3 workers (balanced mode)...
-powershell -ExecutionPolicy Bypass -File run_miner_background.ps1
 echo.
 echo Miner started!
 pause
@@ -195,13 +199,16 @@ echo ========================================
 echo    Mining Status
 echo ========================================
 echo.
-if not exist NightMiner (
-    echo ERROR: NightMiner folder not found!
-    pause
-    goto MENU
+if exist NightMiner (
+    cd NightMiner
+    powershell -ExecutionPolicy Bypass -File check_miner_status.ps1
+    cd ..
+) else if exist check_miner_status.ps1 (
+    powershell -ExecutionPolicy Bypass -File check_miner_status.ps1
+) else (
+    echo ERROR: Cannot find check_miner_status.ps1
+    echo Please ensure you're in the correct directory.
 )
-cd NightMiner
-powershell -ExecutionPolicy Bypass -File check_miner_status.ps1
 echo.
 pause
 goto MENU
@@ -212,13 +219,16 @@ echo ========================================
 echo    Stopping Mining
 echo ========================================
 echo.
-if not exist NightMiner (
-    echo ERROR: NightMiner folder not found!
-    pause
-    goto MENU
+if exist NightMiner (
+    cd NightMiner
+    powershell -ExecutionPolicy Bypass -File stop_miner.ps1
+    cd ..
+) else if exist stop_miner.ps1 (
+    powershell -ExecutionPolicy Bypass -File stop_miner.ps1
+) else (
+    echo ERROR: Cannot find stop_miner.ps1
+    echo Please ensure you're in the correct directory.
 )
-cd NightMiner
-powershell -ExecutionPolicy Bypass -File stop_miner.ps1
 echo.
 echo Mining stopped!
 pause
