@@ -699,7 +699,7 @@ def color_text(text, color):
     return f"{color}{text}{RESET}"
 
 def display_dashboard(status_dict, num_workers, wallet_manager, challenge_tracker, initial_completed, night_balance_dict, api_base):
-    """Display live dashboard - worker-centric view"""
+    """Display live dashboard - worker-centric view with real-time statistics"""
     while True:
         try:
             time.sleep(5)
@@ -724,11 +724,13 @@ def display_dashboard(status_dict, num_workers, wallet_manager, challenge_tracke
             print("="*110)
             print()
 
+            # Worker status table
             header = f"{'ID':<4} {'Address':<44} {'Challenge':<25} {'Attempts':<12} {'H/s':<10}"
             print(color_text(header, CYAN))
             print("-"*110)
 
             total_hashrate = 0
+            active_workers = 0
 
             for worker_id in range(num_workers):
                 if worker_id not in status_dict:
@@ -755,10 +757,15 @@ def display_dashboard(status_dict, num_workers, wallet_manager, challenge_tracke
                 hash_rate = status.get('hash_rate', 0) or 0
 
                 total_hashrate += hash_rate
+                if hash_rate > 0:
+                    active_workers += 1
 
                 print(f"{worker_id:<4} {address:<44} {challenge_display_padded} {attempts:<12,} {hash_rate:<10.0f}")
 
-            # Calculate total challenges from wallet manager
+            print(color_text("-"*110, CYAN))
+            print()
+
+            # Summary statistics
             total_completed = wallet_manager.count_total_challenges(challenge_tracker)
             session_completed = total_completed - initial_completed
 
@@ -767,19 +774,37 @@ def display_dashboard(status_dict, num_workers, wallet_manager, challenge_tracke
             else:
                 completed_str = str(total_completed)
 
-            print(color_text("-"*110, CYAN))
-            print()
-            print(color_text(f"{'Total Hash Rate:':<20} {total_hashrate:.0f} H/s", CYAN))
+            # Always display NIGHT balance (even if 0.00)
+            night_balance = night_balance_dict.get('balance', 0.0)
+            
+            print(color_text(f"{'Total Hash Rate:':<20} {total_hashrate:,.0f} H/s", CYAN))
+            print(color_text(f"{'Active Workers:':<20} {active_workers}/{num_workers}", CYAN))
             print(color_text(f"{'Total Completed:':<20} {completed_str}", CYAN))
-            print(color_text(f"{'Total NIGHT*:':<20} {night_balance_dict['balance']:.2f}", GREEN))
+            print(color_text(f"{'Total NIGHT:':<20} {night_balance:.2f}", GREEN))
+            
+            # Mining statistics from solutions.csv
+            if os.path.exists("solutions.csv"):
+                try:
+                    with open("solutions.csv", 'r') as f:
+                        solutions = f.readlines()
+                        solution_count = len(solutions)
+                        if solution_count > 0:
+                            print(color_text(f"{'Solutions Saved:':<20} {solution_count} (pending resubmission)", CYAN))
+                except:
+                    pass
+            
+            # Wallet count
+            total_wallets = len(wallet_manager.wallets)
+            print(color_text(f"{'Total Wallets:':<20} {total_wallets}", CYAN))
+            
             print("="*110)
-            print("*Night balance updates every 24h")
+            print("NIGHT balance updates every 24h after 2am UTC")
             print("\nPress Ctrl+C to stop all miners")
 
         except KeyboardInterrupt:
             break
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"Dashboard Error: {e}")
             time.sleep(5)
 
 
