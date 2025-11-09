@@ -197,6 +197,30 @@ Write-Host "    • Backup wallet: Copy-Item wallets.json backup.json" -Foregrou
 Write-Host "    • Update:        git pull" -ForegroundColor Cyan
 
 Write-Host "`n  🌙 Happy mining!" -ForegroundColor Yellow
-Write-Host "`nSetup complete! The miner is running in the background." -ForegroundColor Green
-Write-Host "You are now in the NightMiner directory." -ForegroundColor White
 Write-Host ""
+
+# Ask if user wants to view dashboard now
+Write-Host "Would you like to view the live dashboard now? (Y/n) [default: Y]: " -ForegroundColor Cyan -NoNewline
+$viewDashboard = Read-Host
+if ([string]::IsNullOrWhiteSpace($viewDashboard)) {
+    $viewDashboard = 'Y'
+}
+
+if ($viewDashboard -ne 'n' -and $viewDashboard -ne 'N') {
+    Write-Host "`nLaunching interactive dashboard..." -ForegroundColor Green
+    Write-Host "Press Ctrl+C to exit the dashboard (miner will continue in background)`n" -ForegroundColor Yellow
+    Start-Sleep -Seconds 2
+    
+    # Launch dashboard
+    if (Test-Path ".venv\Scripts\python.exe") {
+        & .venv\Scripts\python.exe miner.py --workers $workers
+    } else {
+        python miner.py --workers $workers
+    }
+} else {
+    Write-Host "`nSetup complete! The miner is running in the background." -ForegroundColor Green
+    Write-Host "You are now in the NightMiner directory." -ForegroundColor White
+    Write-Host "`nRun this anytime to view the dashboard:" -ForegroundColor Cyan
+    Write-Host "  python miner.py --workers $workers" -ForegroundColor White
+    Write-Host ""
+}
