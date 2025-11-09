@@ -137,7 +137,7 @@ This creates `.skey` files in the `skeys/` directory. Import them into a Cardano
 
 ## ⚙️ Customizing Worker Count
 
-The installer automatically recommends workers based on your CPU (75% of cores). To change:
+The installer automatically recommends workers based on your CPU (75% of cores). You can use any number you want:
 
 ```bash
 # Start with custom worker count
@@ -150,13 +150,19 @@ python miner.py --no-donation
 python resubmit_solutions.py
 ```
 
-**Recommended Worker Counts:**
-- **2-core CPU**: 1-2 workers
-- **4-core CPU**: 3 workers
-- **8-core CPU**: 6 workers
-- **16-core CPU**: 12 workers
+**Worker Count Guidelines:**
+- **Light (50%)**: Half your CPU cores - leaves plenty for other tasks
+- **Balanced (75%)**: Three-quarters of cores - recommended for most users
+- **Heavy (100%)**: All CPU cores - maximum mining, system may be slower
+- **Custom**: Any number you prefer based on your needs
 
-Rule of thumb: Use 75% of your CPU cores (each worker = 1 core + 1GB RAM).
+**Examples:**
+- 4-core CPU: 2 (light), 3 (balanced), 4 (heavy)
+- 8-core CPU: 4 (light), 6 (balanced), 8 (heavy)
+- 16-core CPU: 8 (light), 12 (balanced), 16 (heavy)
+- 32-core CPU: 16 (light), 24 (balanced), 32 (heavy)
+
+**Note:** Each worker uses ~1 CPU core and ~1GB RAM. Choose based on your system's capabilities and what else you're running.
 
 ---
 

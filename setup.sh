@@ -99,10 +99,12 @@ fi
 
 echo -e "\n${NC}  Detected $CORES CPU cores${NC}"
 echo -e "${NC}  Recommended workers: $RECOMMENDED (75% of CPU)${NC}"
-echo -e "\n${YELLOW}  Worker count options:${NC}"
-echo -e "${NC}    • Light (50%):   $((CORES / 2)) workers${NC}"
+echo -e "\n${YELLOW}  Worker count guidelines:${NC}"
+echo -e "${NC}    • Light (50%):    $((CORES / 2)) workers${NC}"
 echo -e "${GREEN}    • Balanced (75%): $RECOMMENDED workers (recommended)${NC}"
-echo -e "${NC}    • Maximum (100%): $CORES workers${NC}"
+echo -e "${NC}    • Heavy (100%):   $CORES workers${NC}"
+echo -e "${CYAN}    • Custom:         Enter any number you prefer${NC}"
+echo -e "\n${NC}  Note: Each worker uses ~1 CPU core and ~1GB RAM${NC}"
 
 echo -e "\n${CYAN}  How many workers? [default: $RECOMMENDED]: ${NC}"
 read -r WORKERS

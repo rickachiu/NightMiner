@@ -109,10 +109,12 @@ $recommended = [math]::Max(1, [math]::Floor($coreCount * 0.75))
 
 Write-Host "`n  Detected $coreCount CPU cores" -ForegroundColor White
 Write-Host "  Recommended workers: $recommended (75% of CPU)" -ForegroundColor White
-Write-Host "`n  Worker count options:" -ForegroundColor Yellow
-Write-Host "    • Light (50%):   $([math]::Max(1, [math]::Floor($coreCount * 0.5))) workers" -ForegroundColor White
+Write-Host "`n  Worker count guidelines:" -ForegroundColor Yellow
+Write-Host "    • Light (50%):    $([math]::Max(1, [math]::Floor($coreCount * 0.5))) workers" -ForegroundColor White
 Write-Host "    • Balanced (75%): $recommended workers (recommended)" -ForegroundColor Green
-Write-Host "    • Maximum (100%): $coreCount workers" -ForegroundColor White
+Write-Host "    • Heavy (100%):   $coreCount workers" -ForegroundColor White
+Write-Host "    • Custom:         Enter any number you prefer" -ForegroundColor Cyan
+Write-Host "`n  Note: Each worker uses ~1 CPU core and ~1GB RAM" -ForegroundColor Gray
 
 $workers = Read-Host "`n  How many workers? [default: $recommended]"
 if ([string]::IsNullOrWhiteSpace($workers)) {
