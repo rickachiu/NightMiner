@@ -9,27 +9,36 @@ Automated mining bot for the Midnight Network's scavenger hunt. Earn NIGHT token
 ## ⚡ One-Line Install
 
 ### Windows
+1. **Open PowerShell** (Right-click Start menu → Windows PowerShell)
+2. **Copy and paste this command:**
 ```powershell
 irm https://raw.githubusercontent.com/rickachiu/NightMiner/main/SETUP.ps1 | iex
 ```
+3. Press Enter and follow the prompts
 
 ### Linux
+1. **Open Terminal** (Ctrl+Alt+T)
+2. **Copy and paste this command:**
 ```bash
 curl -sSL https://raw.githubusercontent.com/rickachiu/NightMiner/main/setup.sh | bash
 ```
+3. Press Enter and follow the prompts
 
 ### MacOS
+1. **Open Terminal** (Cmd+Space, type "Terminal")
+2. **Copy and paste this command:**
 ```bash
 curl -sSL https://raw.githubusercontent.com/rickachiu/NightMiner/main/setup.sh | bash
 ```
+3. Press Enter and follow the prompts
 
 **That's it!** The installer will:
 - ✅ Install all dependencies (Git, UV, Python, packages)
 - ✅ Configure optimal worker count for your CPU
-- ✅ Set up auto-start on boot (optional)
+- ✅ Set up auto-start on boot (defaults to YES)
 - ✅ Start mining immediately in the background
 
-> **💡 First time?** You'll need [Git](https://git-scm.com/downloads) installed first. The installer will guide you if it's missing.
+> **💡 Note:** Windows users need [Git](https://git-scm.com/downloads) installed first. The installer will guide you if it's missing.
 
 ---
 
