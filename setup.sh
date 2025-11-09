@@ -114,8 +114,11 @@ echo -e "${GREEN}  ✓ Configured for $WORKERS workers${NC}"
 
 # Create systemd service for Linux
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    echo -e "\n${CYAN}  Enable auto-start on boot? (Y/n): ${NC}"
+    echo -e "\n${CYAN}  Enable auto-start on boot? (Y/n) [default: Y]: ${NC}"
     read -r AUTO_START
+    if [ -z "$AUTO_START" ]; then
+        AUTO_START="Y"
+    fi
     if [ "$AUTO_START" != "n" ] && [ "$AUTO_START" != "N" ]; then
         SERVICE_FILE="$HOME/.config/systemd/user/nightminer.service"
         mkdir -p "$HOME/.config/systemd/user"
@@ -144,8 +147,11 @@ fi
 
 # Create launch agent for MacOS
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    echo -e "\n${CYAN}  Enable auto-start on boot? (Y/n): ${NC}"
+    echo -e "\n${CYAN}  Enable auto-start on boot? (Y/n) [default: Y]: ${NC}"
     read -r AUTO_START
+    if [ -z "$AUTO_START" ]; then
+        AUTO_START="Y"
+    fi
     if [ "$AUTO_START" != "n" ] && [ "$AUTO_START" != "N" ]; then
         PLIST_FILE="$HOME/Library/LaunchAgents/com.nightminer.plist"
         mkdir -p "$HOME/Library/LaunchAgents"
@@ -203,6 +209,7 @@ echo -e "\n${YELLOW}  🚀 Starting miner now...${NC}"
 sleep 2
 
 echo -e "\n${GREEN}  ✓ Miner is running in background!${NC}"
+echo -e "${YELLOW}     (Mining ends Nov 21, 2025 - airdrop cutoff)${NC}"
 echo -e "\n${NC}  📋 Useful commands:${NC}"
 echo -e "${CYAN}    • Check status:  ps aux | grep miner.py${NC}"
 echo -e "${CYAN}    • Stop miner:    pkill -f miner.py${NC}"

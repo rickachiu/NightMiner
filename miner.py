@@ -844,6 +844,26 @@ def main():
     """Main entry point with continuous worker spawning"""
     logger = setup_logging()
 
+    # Check if mining period has ended (Nov 22, 2025)
+    cutoff_date = datetime(2025, 11, 22, tzinfo=timezone.utc)
+    now_utc = datetime.now(timezone.utc)
+    
+    if now_utc >= cutoff_date:
+        print("="*70)
+        print("MIDNIGHT MINER - AIRDROP ENDED")
+        print("="*70)
+        print()
+        print("The Midnight Network scavenger hunt airdrop ended on Nov 21, 2025.")
+        print("Mining is no longer active.")
+        print()
+        print("Thank you for participating!")
+        print()
+        print("To claim your NIGHT tokens:")
+        print("  1. Run: python export_skeys.py")
+        print("  2. Import the .skey files into Eternl wallet")
+        print("="*70)
+        return 0
+
     print("="*70)
     print(f"MIDNIGHT MINER - v{VERSION}")
     print("="*70)

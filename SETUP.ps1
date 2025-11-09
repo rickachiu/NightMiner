@@ -78,30 +78,39 @@ $workers = [int]$workers
 
 Write-Host "  ✓ Configured for $workers workers" -ForegroundColor Green
 
-# Create auto-start VBS
-$vbsContent = @"
-Set WshShell = CreateObject("WScript.Shell")
-ScriptDir = CreateObject("Scripting.FileSystemObject").GetParentFolderName(WScript.ScriptFullName)
-WshShell.Run "cmd /c cd /d """ & ScriptDir & """ && .venv\Scripts\python.exe miner.py --workers $workers", 0, False
-Set WshShell = Nothing
+# Create auto-start script
+$startScript = @"
+@echo off
+cd /d "%~dp0"
+if exist .venv\Scripts\python.exe (
+    .venv\Scripts\python.exe miner.py --workers $workers
+) else (
+    python miner.py --workers $workers
+)
 "@
-$vbsContent | Set-Content "run_miner_auto.vbs"
+$startScript | Set-Content "start_miner.bat"
 
-# Ask about auto-start
-Write-Host "`n  Enable auto-start on Windows boot? (Y/n): " -ForegroundColor Cyan -NoNewline
+# Ask about auto-start (default YES)
+Write-Host "`n  Enable auto-start on Windows boot? (Y/n) [default: Y]: " -ForegroundColor Cyan -NoNewline
 $autoStart = Read-Host
+if ([string]::IsNullOrWhiteSpace($autoStart)) {
+    $autoStart = 'Y'
+}
+
 if ($autoStart -ne 'n' -and $autoStart -ne 'N') {
     $startupFolder = [Environment]::GetFolderPath('Startup')
     $shortcutPath = Join-Path $startupFolder "NightMiner.lnk"
     
     $WshShell = New-Object -ComObject WScript.Shell
     $Shortcut = $WshShell.CreateShortcut($shortcutPath)
-    $Shortcut.TargetPath = (Join-Path $PWD "run_miner_auto.vbs")
+    $Shortcut.TargetPath = (Join-Path $PWD "start_miner.bat")
     $Shortcut.WorkingDirectory = $PWD
     $Shortcut.Description = "Night Miner - Auto Start ($workers workers)"
     $Shortcut.Save()
     
-    Write-Host "  ✓ Auto-start enabled" -ForegroundColor Green
+    Write-Host "  ✓ Auto-start enabled (starts on boot)" -ForegroundColor Green
+} else {
+    Write-Host "  ○ Auto-start disabled" -ForegroundColor Yellow
 }
 
 # Installation complete
@@ -114,10 +123,11 @@ Write-Host "    • $workers workers" -ForegroundColor Cyan
 Write-Host "    • Auto-start: $(if ($autoStart -ne 'n' -and $autoStart -ne 'N') {'Enabled'} else {'Disabled'})" -ForegroundColor Cyan
 
 Write-Host "`n  🚀 Starting miner now..." -ForegroundColor Yellow
-Start-Process -FilePath (Join-Path $PWD "run_miner_auto.vbs") -WindowStyle Hidden
+Start-Process -FilePath (Join-Path $PWD "start_miner.bat") -WindowStyle Hidden
 Start-Sleep -Seconds 2
 
 Write-Host "`n  ✓ Miner is running in background!" -ForegroundColor Green
+Write-Host "     (Mining ends Nov 21, 2025 - airdrop cutoff)" -ForegroundColor Yellow
 Write-Host "`n  📋 Useful commands:" -ForegroundColor White
 Write-Host "    • Check status:  .\check_miner_status.ps1" -ForegroundColor Cyan
 Write-Host "    • Stop miner:    .\stop_miner.ps1" -ForegroundColor Cyan
