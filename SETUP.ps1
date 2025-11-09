@@ -1,10 +1,10 @@
 # NightMiner - One-Line Setup Script
-# Usage: irm https://raw.githubusercontent.com/rickachiu/NightMiner/main/SETUP.ps1 | iex
+# Usage: iex (irm https://raw.githubusercontent.com/rickachiu/NightMiner/main/SETUP.ps1)
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
 
-# Wrap entire script in try-catch to prevent window from closing on error
-try {
+# This script is designed to be run with: iex (irm URL)
+# Not: irm URL | iex (which doesn't support Read-Host properly)
 
 Write-Host "`n╔══════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
 Write-Host "║           NIGHT MINER - One-Line Installer               ║" -ForegroundColor Cyan
@@ -18,9 +18,12 @@ if (-not $gitInstalled) {
     Write-Host "`n  Please install Git first:" -ForegroundColor Yellow
     Write-Host "    1. Download: https://git-scm.com/download/win" -ForegroundColor White
     Write-Host "    2. Install with default settings" -ForegroundColor White
-    Write-Host "    3. Restart your computer" -ForegroundColor White
-    Write-Host "    4. Run this command again`n" -ForegroundColor White
-    exit 1
+    Write-Host "    3. Restart PowerShell (close and reopen)" -ForegroundColor White
+    Write-Host "    4. Run this command again:`n" -ForegroundColor White
+    Write-Host "       iex (irm https://raw.githubusercontent.com/rickachiu/NightMiner/main/SETUP.ps1)`n" -ForegroundColor Cyan
+    Read-Host "Press Enter to open Git download page"
+    Start-Process "https://git-scm.com/download/win"
+    return
 }
 Write-Host "  ✓ Git is installed" -ForegroundColor Green
 
@@ -150,17 +153,6 @@ Write-Host "    • Backup wallet: Copy-Item wallets.json backup.json" -Foregrou
 Write-Host "    • Update:        git pull" -ForegroundColor Cyan
 
 Write-Host "`n  🌙 Happy mining!" -ForegroundColor Yellow
+Write-Host "`nSetup complete! The miner is running in the background." -ForegroundColor Green
+Write-Host "You are now in the NightMiner directory." -ForegroundColor White
 Write-Host ""
-
-} catch {
-    Write-Host "`n`n╔══════════════════════════════════════════════════════════╗" -ForegroundColor Red
-    Write-Host "║                    ✗ ERROR OCCURRED                      ║" -ForegroundColor Red
-    Write-Host "╚══════════════════════════════════════════════════════════╝" -ForegroundColor Red
-    Write-Host "`nError: $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host "`nStack trace:" -ForegroundColor Yellow
-    Write-Host $_.ScriptStackTrace -ForegroundColor Gray
-    Write-Host "`n`nPlease report this issue at: https://github.com/rickachiu/NightMiner/issues" -ForegroundColor Yellow
-} finally {
-    Write-Host "`nPress any key to close this window..." -ForegroundColor Gray
-    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-}

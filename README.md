@@ -12,9 +12,11 @@ Automated mining bot for the Midnight Network's scavenger hunt. Earn NIGHT token
 1. **Open PowerShell** (Right-click Start menu → Windows PowerShell)
 2. **Copy and paste this command:**
 ```powershell
-irm https://raw.githubusercontent.com/rickachiu/NightMiner/main/SETUP.ps1 | iex
+iex (irm https://raw.githubusercontent.com/rickachiu/NightMiner/main/SETUP.ps1)
 ```
 3. Press Enter and follow the prompts
+
+> **Important:** Use `iex (irm ...)` not `irm ... | iex` - the parentheses are required!
 
 ### Linux
 1. **Open Terminal** (Ctrl+Alt+T)
