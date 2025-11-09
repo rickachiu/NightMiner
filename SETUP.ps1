@@ -11,24 +11,62 @@ Write-Host "║           NIGHT MINER - One-Line Installer               ║" -F
 Write-Host "╚══════════════════════════════════════════════════════════╝`n" -ForegroundColor Cyan
 
 # Check if Git is installed
-Write-Host "[1/6] Checking for Git..." -ForegroundColor Cyan
+Write-Host "[1/7] Checking for Git..." -ForegroundColor Cyan
 $gitInstalled = Get-Command git -ErrorAction SilentlyContinue
 if (-not $gitInstalled) {
-    Write-Host "  ✗ Git is not installed." -ForegroundColor Red
-    Write-Host "`n  Please install Git first:" -ForegroundColor Yellow
-    Write-Host "    1. Download: https://git-scm.com/download/win" -ForegroundColor White
-    Write-Host "    2. Install with default settings" -ForegroundColor White
-    Write-Host "    3. Restart PowerShell (close and reopen)" -ForegroundColor White
-    Write-Host "    4. Run this command again:`n" -ForegroundColor White
-    Write-Host "       iex (irm https://raw.githubusercontent.com/rickachiu/NightMiner/main/SETUP.ps1)`n" -ForegroundColor Cyan
-    Read-Host "Press Enter to open Git download page"
-    Start-Process "https://git-scm.com/download/win"
-    return
+    Write-Host "  ✗ Git is not installed. Installing automatically..." -ForegroundColor Yellow
+    
+    # Try winget first (Windows 10/11)
+    $wingetInstalled = Get-Command winget -ErrorAction SilentlyContinue
+    if ($wingetInstalled) {
+        Write-Host "  Installing Git via winget..." -ForegroundColor Cyan
+        try {
+            winget install --id Git.Git -e --source winget --silent --accept-package-agreements --accept-source-agreements
+            # Refresh PATH
+            $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+            Write-Host "  ✓ Git installed successfully!" -ForegroundColor Green
+        } catch {
+            Write-Host "  ✗ Winget installation failed, trying chocolatey..." -ForegroundColor Yellow
+        }
+    }
+    
+    # Try chocolatey if winget failed or not available
+    $gitInstalled = Get-Command git -ErrorAction SilentlyContinue
+    if (-not $gitInstalled) {
+        $chocoInstalled = Get-Command choco -ErrorAction SilentlyContinue
+        if ($chocoInstalled) {
+            Write-Host "  Installing Git via Chocolatey..." -ForegroundColor Cyan
+            try {
+                choco install git -y
+                # Refresh PATH
+                $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+                Write-Host "  ✓ Git installed successfully!" -ForegroundColor Green
+            } catch {
+                Write-Host "  ✗ Chocolatey installation failed" -ForegroundColor Red
+            }
+        }
+    }
+    
+    # Final check - if still not installed, manual instructions
+    $gitInstalled = Get-Command git -ErrorAction SilentlyContinue
+    if (-not $gitInstalled) {
+        Write-Host "`n  ✗ Automatic Git installation failed." -ForegroundColor Red
+        Write-Host "`n  Please install Git manually:" -ForegroundColor Yellow
+        Write-Host "    1. Visit: https://git-scm.com/download/win" -ForegroundColor White
+        Write-Host "    2. Download and install with default settings" -ForegroundColor White
+        Write-Host "    3. Restart PowerShell (close and reopen)" -ForegroundColor White
+        Write-Host "    4. Run this command again:`n" -ForegroundColor White
+        Write-Host "       iex (irm https://raw.githubusercontent.com/rickachiu/NightMiner/main/SETUP.ps1)`n" -ForegroundColor Cyan
+        Read-Host "Press Enter to open Git download page"
+        Start-Process "https://git-scm.com/download/win"
+        return
+    }
+} else {
+    Write-Host "  ✓ Git is already installed" -ForegroundColor Green
 }
-Write-Host "  ✓ Git is installed" -ForegroundColor Green
 
 # Clone or update repository
-Write-Host "`n[2/6] Getting NightMiner..." -ForegroundColor Cyan
+Write-Host "`n[2/7] Getting NightMiner..." -ForegroundColor Cyan
 if (Test-Path "NightMiner") {
     Write-Host "  Updating existing installation..." -ForegroundColor Yellow
     Set-Location NightMiner
@@ -40,7 +78,7 @@ if (Test-Path "NightMiner") {
 Write-Host "  ✓ NightMiner downloaded" -ForegroundColor Green
 
 # Install UV
-Write-Host "`n[3/6] Installing UV (fast package manager)..." -ForegroundColor Cyan
+Write-Host "`n[3/7] Installing UV (fast package manager)..." -ForegroundColor Cyan
 $uvInstalled = Get-Command uv -ErrorAction SilentlyContinue
 if (-not $uvInstalled) {
     irm https://astral.sh/uv/install.ps1 | iex
@@ -51,7 +89,7 @@ if (-not $uvInstalled) {
 }
 
 # Setup Python environment
-Write-Host "`n[4/6] Setting up Python environment..." -ForegroundColor Cyan
+Write-Host "`n[4/7] Setting up Python environment..." -ForegroundColor Cyan
 if (-not (Test-Path ".venv")) {
     & uv venv
     Write-Host "  ✓ Virtual environment created" -ForegroundColor Green
@@ -60,12 +98,12 @@ if (-not (Test-Path ".venv")) {
 }
 
 # Install dependencies
-Write-Host "`n[5/6] Installing dependencies..." -ForegroundColor Cyan
+Write-Host "`n[5/7] Installing dependencies..." -ForegroundColor Cyan
 & uv pip install -r requirements.txt
 Write-Host "  ✓ Dependencies installed" -ForegroundColor Green
 
 # Configure workers
-Write-Host "`n[6/6] Configuring workers..." -ForegroundColor Cyan
+Write-Host "`n[6/7] Configuring workers..." -ForegroundColor Cyan
 $coreCount = (Get-WmiObject Win32_ComputerSystem).NumberOfLogicalProcessors
 $recommended = [math]::Max(1, [math]::Floor($coreCount * 0.75))
 
@@ -83,6 +121,9 @@ if ([string]::IsNullOrWhiteSpace($workers)) {
 $workers = [int]$workers
 
 Write-Host "  ✓ Configured for $workers workers" -ForegroundColor Green
+
+# Auto-start configuration
+Write-Host "`n[7/7] Configuring auto-start..." -ForegroundColor Cyan
 
 # Create auto-start script
 $startScript = @"
