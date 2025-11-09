@@ -149,11 +149,12 @@ if ([string]::IsNullOrWhiteSpace($autoStart)) {
 if ($autoStart -ne 'n' -and $autoStart -ne 'N') {
     $startupFolder = [Environment]::GetFolderPath('Startup')
     $shortcutPath = Join-Path $startupFolder "NightMiner.lnk"
+    $currentDir = $PWD.Path
     
     $WshShell = New-Object -ComObject WScript.Shell
     $Shortcut = $WshShell.CreateShortcut($shortcutPath)
-    $Shortcut.TargetPath = (Join-Path $PWD "start_miner.bat")
-    $Shortcut.WorkingDirectory = $PWD
+    $Shortcut.TargetPath = (Join-Path $currentDir "start_miner.bat")
+    $Shortcut.WorkingDirectory = $currentDir
     $Shortcut.Description = "Night Miner - Auto Start ($workers workers)"
     $Shortcut.Save()
     
