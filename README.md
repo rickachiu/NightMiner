@@ -35,18 +35,38 @@ curl -sSL https://raw.githubusercontent.com/rickachiu/NightMiner/main/setup.sh |
 
 ## 📋 After Installation
 
-The miner runs automatically in the background. Here are the key commands:
+The installer starts mining automatically in the background. You have two ways to interact with it:
 
-### Check Status
+### Option 1: Interactive Dashboard (Recommended)
 **Windows:**
 ```powershell
 cd NightMiner
-.\check_miner_status.ps1
+python miner.py --workers 3
 ```
 
 **Linux/Mac:**
 ```bash
 cd NightMiner
+.venv/bin/python miner.py --workers 3
+```
+
+This shows a **live dashboard** with real-time stats for each worker:
+- Hash rates
+- Challenges being solved
+- Total NIGHT earned
+- Press `Ctrl+C` to stop
+
+### Option 2: Background Mining (Check Status)
+
+If running in background (hidden), check status without opening dashboard:
+
+**Windows:**
+```powershell
+.\check_miner_status.ps1
+```
+
+**Linux/Mac:**
+```bash
 tail -f miner.log
 # or
 ps aux | grep miner.py
@@ -96,9 +116,10 @@ This creates `.skey` files in the `skeys/` directory. Import them into a Cardano
 
 ---
 
-## ⚙️ Advanced Usage
+## ⚙️ Customizing Worker Count
 
-### Manual Start (without installer)
+The installer automatically recommends workers based on your CPU (75% of cores). To change:
+
 ```bash
 # Start with custom worker count
 python miner.py --workers 6
@@ -106,25 +127,25 @@ python miner.py --workers 6
 # Disable developer donations (optional 5%)
 python miner.py --no-donation
 
-# Resubmit failed solutions
+# Resubmit failed solutions (if network issues occurred)
 python resubmit_solutions.py
 ```
 
-### Recommended Worker Counts
+**Recommended Worker Counts:**
 - **2-core CPU**: 1-2 workers
 - **4-core CPU**: 3 workers
 - **8-core CPU**: 6 workers
 - **16-core CPU**: 12 workers
 
-Rule of thumb: Use 75% of your CPU cores.
+Rule of thumb: Use 75% of your CPU cores (each worker = 1 core + 1GB RAM).
 
 ---
 
-## 📚 Documentation
+## 📚 Additional Guides
 
-- **[UNIFIED_INSTALLER_README.md](UNIFIED_INSTALLER_README.md)** - Detailed installer features and dashboard
-- **[BACKGROUND_MINING.md](BACKGROUND_MINING.md)** - Windows background mining guide
-- **[EasyGuide.md](EasyGuide.md)** - Step-by-step for beginners
+- **[UNIFIED_INSTALLER_README.md](UNIFIED_INSTALLER_README.md)** - Detailed installer features
+- **[BACKGROUND_MINING.md](BACKGROUND_MINING.md)** - Advanced background mining
+- **[EasyGuide.md](EasyGuide.md)** - Beginner-friendly walkthrough
 
 ---
 
