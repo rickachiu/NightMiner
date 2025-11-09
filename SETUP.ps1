@@ -3,6 +3,9 @@
 
 $ErrorActionPreference = "Stop"
 
+# Wrap entire script in try-catch to prevent window from closing on error
+try {
+
 Write-Host "`n╔══════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
 Write-Host "║           NIGHT MINER - One-Line Installer               ║" -ForegroundColor Cyan
 Write-Host "╚══════════════════════════════════════════════════════════╝`n" -ForegroundColor Cyan
@@ -148,3 +151,16 @@ Write-Host "    • Update:        git pull" -ForegroundColor Cyan
 
 Write-Host "`n  🌙 Happy mining!" -ForegroundColor Yellow
 Write-Host ""
+
+} catch {
+    Write-Host "`n`n╔══════════════════════════════════════════════════════════╗" -ForegroundColor Red
+    Write-Host "║                    ✗ ERROR OCCURRED                      ║" -ForegroundColor Red
+    Write-Host "╚══════════════════════════════════════════════════════════╝" -ForegroundColor Red
+    Write-Host "`nError: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "`nStack trace:" -ForegroundColor Yellow
+    Write-Host $_.ScriptStackTrace -ForegroundColor Gray
+    Write-Host "`n`nPlease report this issue at: https://github.com/rickachiu/NightMiner/issues" -ForegroundColor Yellow
+} finally {
+    Write-Host "`nPress any key to close this window..." -ForegroundColor Gray
+    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+}
