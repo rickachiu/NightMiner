@@ -210,10 +210,21 @@ sleep 2
 
 echo -e "\n${GREEN}  ✓ Miner is running in background!${NC}"
 echo -e "${YELLOW}     (Mining ends Nov 21, 2025 - airdrop cutoff)${NC}"
-echo -e "\n${NC}  📋 Useful commands:${NC}"
-echo -e "${CYAN}    • Check status:  ps aux | grep miner.py${NC}"
+echo -e "\n${NC}  📊 How to Monitor Your Mining:${NC}"
+echo -e "\n${GREEN}    PRIMARY - Interactive Dashboard (Recommended):${NC}"
+echo -e "${CYAN}      .venv/bin/python miner.py --workers $WORKERS${NC}"
+echo -e "${NC}      → Shows live stats, hash rates, NIGHT earned${NC}"
+echo -e "${NC}      → Real-time updates every 5 seconds${NC}"
+echo -e "${NC}      → Press Ctrl+C to stop${NC}"
+
+echo -e "\n${YELLOW}    SECONDARY - Quick Status Check:${NC}"
+echo -e "${CYAN}      tail -f miner.log${NC}"
+echo -e "${NC}      → Quick peek at mining logs${NC}"
+echo -e "${CYAN}      ps aux | grep miner.py${NC}"
+echo -e "${NC}      → Check if miner is running${NC}"
+
+echo -e "\n${NC}  🔧 Other Useful Commands:${NC}"
 echo -e "${CYAN}    • Stop miner:    pkill -f miner.py${NC}"
-echo -e "${CYAN}    • View logs:     tail -f miner.log${NC}"
 echo -e "${CYAN}    • Backup wallet: cp wallets.json backup.json${NC}"
 echo -e "${CYAN}    • Update:        git pull${NC}"
 

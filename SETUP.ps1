@@ -128,8 +128,20 @@ Start-Sleep -Seconds 2
 
 Write-Host "`n  ✓ Miner is running in background!" -ForegroundColor Green
 Write-Host "     (Mining ends Nov 21, 2025 - airdrop cutoff)" -ForegroundColor Yellow
-Write-Host "`n  📋 Useful commands:" -ForegroundColor White
-Write-Host "    • Check status:  .\check_miner_status.ps1" -ForegroundColor Cyan
+Write-Host "`n  📊 How to Monitor Your Mining:" -ForegroundColor White
+Write-Host "`n    PRIMARY - Interactive Dashboard (Recommended):" -ForegroundColor Green
+Write-Host "      .\Night-Miner.ps1" -ForegroundColor Cyan
+Write-Host "      or" -ForegroundColor White
+Write-Host "      python miner.py --workers $workers" -ForegroundColor Cyan
+Write-Host "      → Shows live stats, hash rates, NIGHT earned" -ForegroundColor White
+Write-Host "      → Real-time updates every 5 seconds" -ForegroundColor White
+Write-Host "      → Press Ctrl+C to stop" -ForegroundColor White
+
+Write-Host "`n    SECONDARY - Quick Status Check:" -ForegroundColor Yellow
+Write-Host "      .\check_miner_status.ps1" -ForegroundColor Cyan
+Write-Host "      → Quick peek when running in background" -ForegroundColor White
+
+Write-Host "`n  🔧 Other Useful Commands:" -ForegroundColor White
 Write-Host "    • Stop miner:    .\stop_miner.ps1" -ForegroundColor Cyan
 Write-Host "    • Backup wallet: Copy-Item wallets.json backup.json" -ForegroundColor Cyan
 Write-Host "    • Update:        git pull" -ForegroundColor Cyan

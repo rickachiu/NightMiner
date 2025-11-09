@@ -35,12 +35,17 @@ curl -sSL https://raw.githubusercontent.com/rickachiu/NightMiner/main/setup.sh |
 
 ## 📋 After Installation
 
-The installer starts mining automatically in the background. You have two ways to interact with it:
+The installer starts mining automatically in the background. 
 
-### Option 1: Interactive Dashboard (Recommended)
+### 🎯 PRIMARY: Interactive Dashboard (Recommended)
+
+Use this to monitor your mining with live stats:
+
 **Windows:**
 ```powershell
 cd NightMiner
+.\Night-Miner.ps1
+# or
 python miner.py --workers 3
 ```
 
@@ -50,15 +55,18 @@ cd NightMiner
 .venv/bin/python miner.py --workers 3
 ```
 
-This shows a **live dashboard** with real-time stats for each worker:
-- Hash rates
-- Challenges being solved
-- Total NIGHT earned
+**Shows:**
+- ✅ Live hash rates per worker
+- ✅ Challenges being solved
+- ✅ Total NIGHT earned (always visible, even if 0.00)
+- ✅ Active workers count
+- ✅ Solutions saved
+- ✅ Real-time updates every 5 seconds
 - Press `Ctrl+C` to stop
 
-### Option 2: Background Mining (Check Status)
+### 📊 SECONDARY: Quick Status Check
 
-If running in background (hidden), check status without opening dashboard:
+Use this only for a quick peek when miner runs in background:
 
 **Windows:**
 ```powershell
