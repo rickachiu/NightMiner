@@ -64,7 +64,7 @@ If you already have it working on one machine:
    - Copy `NightMiner_portable.zip` via USB/network
    - Extract to `C:\apps\NightMiner`
    - Delete the `wallets.json` file (so it creates new wallets)
-   - Double-click `run_miner_hidden.vbs`
+   - Run `.\run_miner_background.ps1`
 
 ⚠️ **Important:** Each machine should have its own `wallets.json` - don't share wallet files between machines!
 
@@ -102,7 +102,7 @@ Default is 3 workers (good for 4-core CPUs).
 
 **To change:**
 
-Edit `run_miner_hidden.vbs` or `run_miner_background.ps1`:
+Edit `run_miner_background.ps1` or run with custom workers:
 - **1 worker** for laptops (low impact)
 - **2 workers** for dual-core
 - **3 workers** for quad-core (recommended, leaves headroom)
@@ -161,7 +161,7 @@ Edit `run_miner_hidden.vbs` or `run_miner_background.ps1`:
 | Task | Command |
 |------|---------|
 | Install | `EASY_INSTALL.bat` |
-| Start mining | `run_miner_hidden.vbs` |
+| Start mining | `.\run_miner_background.ps1` |
 | Check status | `.\check_miner_status.ps1` |
 | Stop mining | `.\stop_miner.ps1` |
 | View dashboard | `python miner.py --workers 3` |

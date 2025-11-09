@@ -29,17 +29,20 @@ That's it! The script will:
 
 ## 🎮 Starting the Miner
 
-### For 32GB RAM Machine (16 Workers - Recommended)
-**Double-click:** `run_miner_hidden.vbs`
-
-Or via PowerShell:
+### For Background Mining (Recommended)
 ```powershell
 .\run_miner_background.ps1
 ```
+Runs with 3 workers by default (hidden in background)
 
 ### For Laptop/Lower RAM (1 Worker)
 ```powershell
 python miner.py
+```
+
+### Custom Worker Count
+```powershell
+Start-Process python -ArgumentList "miner.py --workers 6" -WindowStyle Hidden
 ```
 
 ---
@@ -184,7 +187,7 @@ When ready to claim your earned NIGHT tokens:
 | Command | Description |
 |---------|-------------|
 | `.\setup_with_uv.ps1` | One-command setup (recommended) |
-| `run_miner_hidden.vbs` | Start 16 workers (hidden) |
+| `.\run_miner_background.ps1` | Start mining (hidden, 3 workers) |
 | `.\check_miner_status.ps1` | Check mining status |
 | `.\stop_miner.ps1` | Stop all miners |
 | `python export_skeys.py` | Export wallet keys |
