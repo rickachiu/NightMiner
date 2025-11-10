@@ -335,7 +335,7 @@ function Start-Miner {
     $pythonExe = if (Test-Path ".venv\Scripts\python.exe") { ".venv\Scripts\python.exe" } else { "python" }
     Start-Process -FilePath $pythonExe -ArgumentList "miner.py --workers $Workers" -WindowStyle Hidden
     
-    Write-Success "`n✓ Miner started with $Workers workers (hidden)"
+    Write-Success "`nMiner started with $Workers workers (hidden)"
     Start-Sleep -Seconds 2
 }
 
@@ -395,7 +395,7 @@ if (Test-Path '.venv\Scripts\python.exe') {
                 $startupScriptPath = Join-Path $ScriptDir "start_miner_auto.ps1"
                 $startupScript | Set-Content $startupScriptPath
                 
-                Write-Success "`n✓ Worker count updated to $($config.Workers)"
+                Write-Success "`nWorker count updated to $($config.Workers)"
                 Write-Warning "Restart miner for changes to take effect"
                 Start-Sleep -Seconds 2
             }
@@ -404,10 +404,10 @@ if (Test-Path '.venv\Scripts\python.exe') {
             if (Test-Path "wallets.json") {
                 $backupName = "wallets_backup_$(Get-Date -Format 'yyyyMMdd_HHmmss').json"
                 Copy-Item "wallets.json" $backupName
-                Write-Success "`n✓ Wallets backed up to: $backupName"
+                Write-Success "`nWallets backed up to: $backupName"
                 Start-Sleep -Seconds 2
             } else {
-                Write-Warning "`n⚠ No wallets file found"
+                Write-Warning "`nNo wallets file found"
                 Start-Sleep -Seconds 2
             }
         }
