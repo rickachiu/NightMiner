@@ -59,7 +59,7 @@ function Show-MiningStats {
     $isRunning = Test-MinerRunning
     
     if ($isRunning) {
-        Write-Success "`n✓ Miner Status: RUNNING"
+        Write-Success "`nMiner Status: RUNNING"
         
         # Get process info
         $minerProcesses = @()
@@ -80,7 +80,7 @@ function Show-MiningStats {
             Write-Host "  CPU Time: $([math]::Round($totalCPU, 2))s" -ForegroundColor White
         }
     } else {
-        Write-Warning "`n⚠ Miner Status: NOT RUNNING"
+        Write-Warning "`nMiner Status: NOT RUNNING"
     }
     
     # Mining Statistics
@@ -95,16 +95,16 @@ function Show-MiningStats {
             $accepted = ($solutions | Where-Object { $_.status -eq "accepted" }).Count
             $rejected = ($solutions | Where-Object { $_.status -eq "rejected" }).Count
             
-            Write-Success "    ✓ Accepted: $accepted"
+            Write-Success "    Accepted: $accepted"
             if ($rejected -gt 0) {
-                Write-Error "    ✗ Rejected: $rejected"
+                Write-Error "    Rejected: $rejected"
             }
             
             # NIGHT estimates
             if ($accepted -gt 0) {
                 $estimatedMin = [math]::Round($accepted * 0.1, 2)
                 $estimatedMax = [math]::Round($accepted * 1.0, 2)
-                Write-Host "`n  💰 Estimated NIGHT: $estimatedMin - $estimatedMax" -ForegroundColor Yellow
+                Write-Host "`n  Estimated NIGHT: $estimatedMin - $estimatedMax" -ForegroundColor Yellow
                 Write-Host "     (Actual rewards vary by difficulty)" -ForegroundColor DarkGray
             }
             
@@ -112,7 +112,7 @@ function Show-MiningStats {
             $walletStats = $solutions | Group-Object -Property wallet | Sort-Object Count -Descending
             
             if ($walletStats.Count -gt 0) {
-                Write-Info "`n👛 Wallet Performance:"
+                Write-Info "`nWallet Performance:"
                 $count = 0
                 foreach ($wallet in $walletStats) {
                     $count++
@@ -126,13 +126,13 @@ function Show-MiningStats {
                         $walletEstMax = [math]::Round($walletAccepted * 1.0, 2)
                         
                         Write-Host "  $shortAddr" -ForegroundColor White
-                        Write-Host "    Solutions: $($walletSolutions.Count) | ✓ $walletAccepted ✗ $walletRejected | NIGHT: $walletEstMin-$walletEstMax" -ForegroundColor Gray
+                        Write-Host "    Solutions: $($walletSolutions.Count) | Accepted: $walletAccepted Rejected: $walletRejected | NIGHT: $walletEstMin-$walletEstMax" -ForegroundColor Gray
                     }
                 }
             }
         }
     } else {
-        Write-Info "`n📊 Mining Statistics: No solutions yet"
+        Write-Info "`nMining Statistics: No solutions yet"
     }
     
     # Wallet count
@@ -190,7 +190,7 @@ function Start-Installation {
         Read-Host "`nPress Enter to exit"
         exit 1
     }
-    Write-Success "  ✓ Git is installed"
+    Write-Success "  Git is installed"
     
     # Step 2: Install UV
     Write-Info "`n[2/5] Installing UV (fast package manager)..."
@@ -207,7 +207,7 @@ function Start-Installation {
             exit 1
         }
     } else {
-        Write-Success "  ✓ UV is already installed"
+        Write-Success "  UV is already installed"
     }
     
     # Step 3: Setup Python environment
@@ -342,7 +342,7 @@ function Start-Miner {
 # Stop miner
 function Stop-Miner {
     & (Join-Path $ScriptDir "stop_miner.ps1")
-    Write-Success "`n✓ Miner stopped"
+    Write-Success "`nMiner stopped"
     Start-Sleep -Seconds 2
 }
 
