@@ -320,9 +320,8 @@ if (Test-Path '.venv\Scripts\python.exe') {
     Write-Host "`n  Starting miner now...`n"
     Start-Sleep -Seconds 2
     
-    # Start the miner
-    Start-Process -FilePath $vbsPath -WindowStyle Hidden
-    Start-Sleep -Seconds 3
+    # Start the miner using the Start-Miner function
+    Start-Miner -Workers $workers
     
     return $config
 }
