@@ -135,10 +135,40 @@ function Show-MiningStats {
         Write-Info "`nMining Statistics: No solutions yet"
     }
     
-    # Wallet count
+    # Wallet count and total NIGHT earned
     if (Test-Path "wallets.json") {
         $wallets = Get-Content "wallets.json" | ConvertFrom-Json
         Write-Host "`n  Total Wallets Created: $($wallets.Count)" -ForegroundColor Cyan
+        
+        # Fetch actual NIGHT balance from API
+        Write-Host "`n  Fetching NIGHT balance..." -ForegroundColor Gray
+        $totalNight = 0.0
+        $successCount = 0
+        $failedCount = 0
+        
+        foreach ($wallet in $wallets) {
+            try {
+                $response = Invoke-RestMethod -Uri "https://scavenger.prod.gd.midnighttge.io/statistics/$($wallet.address)" -Method Get -TimeoutSec 5 -ErrorAction Stop
+                $nightAllocation = $response.local.night_allocation
+                if ($nightAllocation) {
+                    $night = $nightAllocation / 1000000.0
+                    $totalNight += $night
+                    $successCount++
+                }
+            } catch {
+                $failedCount++
+            }
+        }
+        
+        if ($successCount -gt 0) {
+            Write-Host "  Total NIGHT Earned: $([math]::Round($totalNight, 2))" -ForegroundColor Green
+            if ($failedCount -gt 0) {
+                Write-Host "    (Failed to fetch $failedCount/$($wallets.Count) wallets)" -ForegroundColor DarkGray
+            }
+        } else {
+            Write-Host "  Total NIGHT Earned: 0.00 (unable to fetch or no balance yet)" -ForegroundColor Yellow
+        }
+        Write-Host "    Balance updates every 24h after 2am UTC" -ForegroundColor DarkGray
     }
 }
 
@@ -161,9 +191,10 @@ function Show-Menu {
         Write-Host "`n  [1] Start Miner" -ForegroundColor Green
     }
     
-    Write-Host "  [2] Refresh Status" -ForegroundColor Cyan
-    Write-Host "  [3] Change Worker Count (Current: $($Config.Workers))" -ForegroundColor Cyan
-    Write-Host "  [4] Backup Wallets" -ForegroundColor Magenta
+    Write-Host "  [2] Check Status (detailed)" -ForegroundColor Cyan
+    Write-Host "  [3] Refresh Dashboard" -ForegroundColor Cyan
+    Write-Host "  [4] Change Worker Count (Current: $($Config.Workers))" -ForegroundColor Cyan
+    Write-Host "  [5] Backup Wallets" -ForegroundColor Magenta
     Write-Host "  [0] Exit" -ForegroundColor White
     
     Write-Host ""
@@ -371,10 +402,20 @@ while ($true) {
             }
         }
         "2" {
+            # Check detailed status using check_miner_status.ps1
+            Clear-Host
+            if (Test-Path (Join-Path $ScriptDir "check_miner_status.ps1")) {
+                & (Join-Path $ScriptDir "check_miner_status.ps1")
+            } else {
+                Write-Warning "check_miner_status.ps1 not found"
+            }
+            Read-Host "`nPress Enter to return to menu"
+        }
+        "3" {
             # Refresh (loop will redraw)
             continue
         }
-        "3" {
+        "4" {
             Write-Host "`nCurrent: $($config.Workers) workers"
             $newWorkers = Read-Host "Enter new worker count"
             if ($newWorkers -match '^\d+$' -and [int]$newWorkers -gt 0) {
@@ -399,7 +440,7 @@ if (Test-Path '.venv\Scripts\python.exe') {
                 Start-Sleep -Seconds 2
             }
         }
-        "4" {
+        "5" {
             if (Test-Path "wallets.json") {
                 $backupName = "wallets_backup_$(Get-Date -Format 'yyyyMMdd_HHmmss').json"
                 Copy-Item "wallets.json" $backupName
