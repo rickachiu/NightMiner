@@ -88,7 +88,7 @@ function Show-MiningStats {
         $solutions = Import-Csv "solutions.csv"
         $solutionCount = $solutions.Count
         
-        Write-Info "`n📊 Mining Statistics:"
+        Write-Info "`nMining Statistics:"
         Write-Host "  Total Solutions: $solutionCount" -ForegroundColor White
         
         if ($solutionCount -gt 0) {
@@ -201,7 +201,7 @@ function Start-Installation {
             $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
             Write-Success '  UV installed successfully'
         } catch {
-            Write-Error "  ✗ Failed to install UV"
+            Write-Error "  Failed to install UV"
             Write-Host "  Error: $_"
             Read-Host "`nPress Enter to exit"
             exit 1
