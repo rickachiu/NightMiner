@@ -700,8 +700,32 @@ def color_text(text, color):
 
 def display_dashboard(status_dict, num_workers, wallet_manager, challenge_tracker, initial_completed, night_balance_dict, api_base):
     """Display live dashboard - worker-centric view with real-time statistics"""
+    
+    # Non-blocking keyboard input handler
+    def check_keyboard_input():
+        """Check if 'E' key was pressed (non-blocking)"""
+        try:
+            if os.name == 'nt':  # Windows
+                import msvcrt
+                if msvcrt.kbhit():
+                    key = msvcrt.getch().decode('utf-8', errors='ignore').upper()
+                    return key == 'E'
+            else:  # Linux/Mac
+                import select
+                if select.select([sys.stdin], [], [], 0)[0]:
+                    key = sys.stdin.read(1).upper()
+                    return key == 'E'
+        except:
+            pass
+        return False
+    
     while True:
         try:
+            # Check for 'E' key press to show earnings
+            if check_keyboard_input():
+                display_wallet_earnings(wallet_manager, api_base)
+                # Continue to dashboard after earnings view
+            
             time.sleep(5)
 
             # Check if we should update NIGHT balance (once per day after 2am UTC)
@@ -797,6 +821,9 @@ def display_dashboard(status_dict, num_workers, wallet_manager, challenge_tracke
             total_wallets = len(wallet_manager.wallets)
             print(color_text(f"{'Total Wallets:':<20} {total_wallets}", CYAN))
             
+            # Per-wallet earnings breakdown
+            print(color_text(f"{'Per-Wallet Earnings:':<20} Press 'E' to view breakdown", CYAN))
+            
             print("="*110)
             print("NIGHT balance updates every 24h after 2am UTC")
             print("\nPress Ctrl+C to stop all miners")
@@ -816,6 +843,71 @@ def get_wallet_statistics(wallet_address, api_base):
         return response.json()
     except Exception:
         return None
+
+
+def display_wallet_earnings(wallet_manager, api_base):
+    """Display per-wallet earnings breakdown"""
+    os.system('clear' if os.name == 'posix' else 'cls')
+    
+    print("="*110)
+    print(f"{BOLD}{CYAN}{'PER-WALLET EARNINGS BREAKDOWN':^110}{RESET}")
+    print("="*110)
+    print()
+    
+    print(f"{'Wallet Address':<45} {'Challenges':<12} {'NIGHT Earned':<15} {'Status':<10}")
+    print("-"*110)
+    
+    total_night = 0.0
+    total_challenges = 0
+    success_count = 0
+    failed_count = 0
+    
+    for i, wallet in enumerate(wallet_manager.wallets, 1):
+        address = wallet['address']
+        short_addr = address[:42] + "..." if len(address) > 42 else address
+        
+        stats = get_wallet_statistics(address, api_base)
+        if stats:
+            local = stats.get('local', {})
+            global_stats = stats.get('global', {})
+            
+            night = local.get('night_allocation', 0) / 1000000.0
+            challenges = global_stats.get('challenges_solved', 0)
+            
+            total_night += night
+            total_challenges += challenges
+            success_count += 1
+            
+            status = "✓ OK"
+            status_color = GREEN
+        else:
+            night = 0.0
+            challenges = 0
+            failed_count += 1
+            status = "✗ Failed"
+            status_color = "\033[31m"  # Red
+        
+        print(f"{short_addr:<45} {challenges:<12} {night:<15.2f} {status_color}{status:<10}{RESET}")
+    
+    print("-"*110)
+    print(f"{BOLD}{'TOTAL':<45} {total_challenges:<12} {total_night:<15.2f} {'':10}{RESET}")
+    print("="*110)
+    
+    if failed_count > 0:
+        print(f"\n{BOLD}Note:{RESET} Failed to fetch {failed_count}/{len(wallet_manager.wallets)} wallets")
+    
+    print("\nPress any key to return to dashboard...")
+    try:
+        import sys, tty, termios
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setraw(sys.stdin.fileno())
+            sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+    except:
+        input()
 
 
 def fetch_total_night_balance(wallet_manager, api_base):

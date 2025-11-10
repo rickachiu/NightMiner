@@ -107,25 +107,44 @@ if (Test-Path "wallets.json") {
     # Fetch actual NIGHT balance from API
     Write-Host "`n=== Actual NIGHT Balance ===" -ForegroundColor Cyan
     $totalNight = 0.0
+    $totalChallenges = 0
     $successCount = 0
     $failedCount = 0
+    $walletEarnings = @()
     
     foreach ($wallet in $wallets) {
         try {
             $response = Invoke-RestMethod -Uri "https://scavenger.prod.gd.midnighttge.io/statistics/$($wallet.address)" -Method Get -TimeoutSec 5 -ErrorAction Stop
             $nightAllocation = $response.local.night_allocation
+            $challengesSolved = $response.global.challenges_solved
+            
             if ($nightAllocation) {
                 $night = $nightAllocation / 1000000.0
                 $totalNight += $night
+                $totalChallenges += $challengesSolved
                 $successCount++
+                
+                $walletEarnings += [PSCustomObject]@{
+                    Address = $wallet.address.Substring(0, [Math]::Min(42, $wallet.address.Length)) + "..."
+                    Challenges = $challengesSolved
+                    NIGHT = $night
+                    Status = "OK"
+                }
             }
         } catch {
             $failedCount++
+            $walletEarnings += [PSCustomObject]@{
+                Address = $wallet.address.Substring(0, [Math]::Min(42, $wallet.address.Length)) + "..."
+                Challenges = 0
+                NIGHT = 0.0
+                Status = "Failed"
+            }
         }
     }
     
     if ($successCount -gt 0) {
         Write-Host "Total NIGHT Earned: $([math]::Round($totalNight, 2))" -ForegroundColor Green
+        Write-Host "Total Challenges: $totalChallenges" -ForegroundColor Green
         if ($failedCount -gt 0) {
             Write-Host "  (Failed to fetch $failedCount/$($wallets.Count) wallets)" -ForegroundColor Yellow
         }
@@ -133,6 +152,16 @@ if (Test-Path "wallets.json") {
         Write-Host "Total NIGHT Earned: 0.00 (unable to fetch or no balance yet)" -ForegroundColor Yellow
     }
     Write-Host "  Balance updates every 24h after 2am UTC" -ForegroundColor DarkGray
+    
+    # Per-wallet earnings breakdown
+    Write-Host "`n=== Per-Wallet Earnings ===" -ForegroundColor Cyan
+    Write-Host ""
+    $walletEarnings | Format-Table -Property @{Label="Wallet Address"; Expression={$_.Address}; Width=45}, 
+                                             @{Label="Challenges"; Expression={$_.Challenges}; Width=12}, 
+                                             @{Label="NIGHT Earned"; Expression={"{0:N2}" -f $_.NIGHT}; Width=15},
+                                             @{Label="Status"; Expression={$_.Status}; Width=10} -AutoSize
+    
+    Write-Host "TOTAL: $totalChallenges challenges | $([math]::Round($totalNight, 2)) NIGHT" -ForegroundColor Green
 }
 
 # Check log file
