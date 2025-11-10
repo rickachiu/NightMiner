@@ -1,4 +1,4 @@
-# Night-Miner - Unified Installation and Management System
+﻿# Night-Miner - Unified Installation and Management System
 # One-stop solution for installing, configuring, and managing the NightMiner
 
 param(
