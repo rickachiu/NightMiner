@@ -269,27 +269,28 @@ function Start-Installation {
     # Step 5: Setup auto-start
     Write-Info "`n[5/5] Configuring auto-start on boot..."
     
-    # Create custom VBS launcher for this worker count
-    $vbsContent = @'
-Set WshShell = CreateObject("WScript.Shell")
-ScriptDir = CreateObject("Scripting.FileSystemObject").GetParentFolderName(WScript.ScriptFullName)
-WshShell.Run "powershell -ExecutionPolicy Bypass -File """ & ScriptDir & "\stop_miner.ps1""", 0, True
-WScript.Sleep 2000
-WshShell.Run "cmd /c cd /d """ & ScriptDir & """ && .venv\Scripts\python.exe miner.py --workers WORKERCOUNT", 0, False
-Set WshShell = Nothing
-'@
-    $vbsContent = $vbsContent -replace 'WORKERCOUNT', $workers
+    # Create PowerShell startup script
+    $startupScript = @"
+# NightMiner Auto-Start Script
+Set-Location '$ScriptDir'
+if (Test-Path '.venv\Scripts\python.exe') {
+    Start-Process -FilePath '.venv\Scripts\python.exe' -ArgumentList 'miner.py --workers $workers' -WindowStyle Hidden
+} else {
+    Start-Process python -ArgumentList 'miner.py --workers $workers' -WindowStyle Hidden
+}
+"@
     
-    $vbsPath = Join-Path $ScriptDir "run_miner_auto.vbs"
-    $vbsContent | Set-Content $vbsPath
+    $startupScriptPath = Join-Path $ScriptDir "start_miner_auto.ps1"
+    $startupScript | Set-Content $startupScriptPath
     
-    # Add to startup
+    # Add to startup folder
     $startupFolder = [Environment]::GetFolderPath('Startup')
     $shortcutPath = Join-Path $startupFolder "NightMiner.lnk"
     
     $WshShell = New-Object -ComObject WScript.Shell
     $Shortcut = $WshShell.CreateShortcut($shortcutPath)
-    $Shortcut.TargetPath = $vbsPath
+    $Shortcut.TargetPath = "powershell.exe"
+    $Shortcut.Arguments = "-WindowStyle Hidden -ExecutionPolicy Bypass -File `"$startupScriptPath`""
     $Shortcut.WorkingDirectory = $ScriptDir
     $Shortcut.Description = "Night Miner - Auto Start ($workers workers)"
     $Shortcut.Save()
@@ -330,25 +331,11 @@ Set WshShell = Nothing
 function Start-Miner {
     param($Workers)
     
-    if (Test-Path "run_miner_auto.vbs") {
-        Start-Process -FilePath (Join-Path $ScriptDir "run_miner_auto.vbs") -WindowStyle Hidden
-    } else {
-        # Fallback: create on the fly
-        $vbsContent = @'
-Set WshShell = CreateObject("WScript.Shell")
-ScriptDir = CreateObject("Scripting.FileSystemObject").GetParentFolderName(WScript.ScriptFullName)
-WshShell.Run "powershell -ExecutionPolicy Bypass -File """ & ScriptDir & "\stop_miner.ps1""", 0, True
-WScript.Sleep 2000
-WshShell.Run "cmd /c cd /d """ & ScriptDir & """ && .venv\Scripts\python.exe miner.py --workers WORKERCOUNT", 0, False
-Set WshShell = Nothing
-'@
-        $vbsContent = $vbsContent -replace 'WORKERCOUNT', $Workers
-        $vbsPath = Join-Path $ScriptDir "run_miner_auto.vbs"
-        $vbsContent | Set-Content $vbsPath
-        Start-Process -FilePath $vbsPath -WindowStyle Hidden
-    }
+    # Use PowerShell to start the miner in background
+    $pythonExe = if (Test-Path ".venv\Scripts\python.exe") { ".venv\Scripts\python.exe" } else { "python" }
+    Start-Process -FilePath $pythonExe -ArgumentList "miner.py --workers $Workers" -WindowStyle Hidden
     
-    Write-Success "`n✓ Miner started with $Workers workers"
+    Write-Success "`n✓ Miner started with $Workers workers (hidden)"
     Start-Sleep -Seconds 2
 }
 
@@ -395,18 +382,18 @@ while ($true) {
                 $config.Workers = [int]$newWorkers
                 Save-MinerConfig $config
                 
-                # Recreate VBS file
-                $vbsContent = @'
-Set WshShell = CreateObject("WScript.Shell")
-ScriptDir = CreateObject("Scripting.FileSystemObject").GetParentFolderName(WScript.ScriptFullName)
-WshShell.Run "powershell -ExecutionPolicy Bypass -File """ & ScriptDir & "\stop_miner.ps1""", 0, True
-WScript.Sleep 2000
-WshShell.Run "cmd /c cd /d """ & ScriptDir & """ && .venv\Scripts\python.exe miner.py --workers WORKERCOUNT", 0, False
-Set WshShell = Nothing
-'@
-                $vbsContent = $vbsContent -replace 'WORKERCOUNT', $config.Workers
-                $vbsPath = Join-Path $ScriptDir "run_miner_auto.vbs"
-                $vbsContent | Set-Content $vbsPath
+                # Recreate startup script with new worker count
+                $startupScript = @"
+# NightMiner Auto-Start Script
+Set-Location '$ScriptDir'
+if (Test-Path '.venv\Scripts\python.exe') {
+    Start-Process -FilePath '.venv\Scripts\python.exe' -ArgumentList 'miner.py --workers $($config.Workers)' -WindowStyle Hidden
+} else {
+    Start-Process python -ArgumentList 'miner.py --workers $($config.Workers)' -WindowStyle Hidden
+}
+"@
+                $startupScriptPath = Join-Path $ScriptDir "start_miner_auto.ps1"
+                $startupScript | Set-Content $startupScriptPath
                 
                 Write-Success "`n✓ Worker count updated to $($config.Workers)"
                 Write-Warning "Restart miner for changes to take effect"
