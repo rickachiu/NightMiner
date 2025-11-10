@@ -821,7 +821,8 @@ def get_wallet_statistics(wallet_address, api_base):
 def fetch_total_night_balance(wallet_manager, api_base):
     """Fetch total NIGHT balance across all wallets once at startup"""
     total_night = 0.0
-    failed = False
+    failed_count = 0
+    success_count = 0
 
     for wallet in wallet_manager.wallets:
         stats = get_wallet_statistics(wallet['address'], api_base)
@@ -829,13 +830,13 @@ def fetch_total_night_balance(wallet_manager, api_base):
             local = stats.get('local', {})
             night = local.get('night_allocation', 0) / 1000000.0
             total_night += night
-
+            success_count += 1
         else:
-            failed = True
-            break
+            failed_count += 1
 
-    if failed:
-        print("[WARNING] Some wallet statistics could not be fetched.")
+    if failed_count > 0:
+        print(f"[WARNING] Failed to fetch stats for {failed_count}/{len(wallet_manager.wallets)} wallets.")
+        print(f"[INFO] Successfully fetched {success_count} wallets. Showing available balance.")
 
     return total_night
 
