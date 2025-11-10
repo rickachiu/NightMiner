@@ -198,8 +198,8 @@ function Start-Installation {
     if (-not $uvInstalled) {
         try {
             irm https://astral.sh/uv/install.ps1 | iex
-            $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-            Write-Success "  ✓ UV installed successfully"
+            $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
+            Write-Success '  UV installed successfully'
         } catch {
             Write-Error "  ✗ Failed to install UV"
             Write-Host "  Error: $_"
@@ -289,7 +289,7 @@ Set WshShell = Nothing
     $Shortcut.Description = "Night Miner - Auto Start ($workers workers)"
     $Shortcut.Save()
     
-    Write-Success "  ✓ Auto-start enabled ($workers workers)"
+    Write-Success "  Auto-start enabled ($workers workers)"
     Write-Host "    Miner will start automatically on boot (hidden)`n"
     
     # Save configuration
