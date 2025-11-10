@@ -99,10 +99,40 @@ else {
     Write-Host "No solutions found yet" -ForegroundColor Yellow
 }
 
-# Check wallets
+# Check wallets and fetch actual NIGHT balance
 if (Test-Path "wallets.json") {
     $wallets = Get-Content "wallets.json" | ConvertFrom-Json
     Write-Host "`nTotal Wallets: $($wallets.Count)" -ForegroundColor Cyan
+    
+    # Fetch actual NIGHT balance from API
+    Write-Host "`n=== Actual NIGHT Balance ===" -ForegroundColor Cyan
+    $totalNight = 0.0
+    $successCount = 0
+    $failedCount = 0
+    
+    foreach ($wallet in $wallets) {
+        try {
+            $response = Invoke-RestMethod -Uri "https://scavenger.prod.gd.midnighttge.io/statistics/$($wallet.address)" -Method Get -TimeoutSec 5 -ErrorAction Stop
+            $nightAllocation = $response.local.night_allocation
+            if ($nightAllocation) {
+                $night = $nightAllocation / 1000000.0
+                $totalNight += $night
+                $successCount++
+            }
+        } catch {
+            $failedCount++
+        }
+    }
+    
+    if ($successCount -gt 0) {
+        Write-Host "Total NIGHT Earned: $([math]::Round($totalNight, 2))" -ForegroundColor Green
+        if ($failedCount -gt 0) {
+            Write-Host "  (Failed to fetch $failedCount/$($wallets.Count) wallets)" -ForegroundColor Yellow
+        }
+    } else {
+        Write-Host "Total NIGHT Earned: 0.00 (unable to fetch or no balance yet)" -ForegroundColor Yellow
+    }
+    Write-Host "  Balance updates every 24h after 2am UTC" -ForegroundColor DarkGray
 }
 
 # Check log file
