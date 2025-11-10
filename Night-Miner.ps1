@@ -265,14 +265,15 @@ function Start-Installation {
     Write-Info "`n[5/5] Configuring auto-start on boot..."
     
     # Create custom VBS launcher for this worker count
-    $vbsContent = @"
+    $vbsContent = @'
 Set WshShell = CreateObject("WScript.Shell")
 ScriptDir = CreateObject("Scripting.FileSystemObject").GetParentFolderName(WScript.ScriptFullName)
 WshShell.Run "powershell -ExecutionPolicy Bypass -File """ & ScriptDir & "\stop_miner.ps1""", 0, True
 WScript.Sleep 2000
-WshShell.Run "cmd /c cd /d """ & ScriptDir & """ && .venv\Scripts\python.exe miner.py --workers $workers", 0, False
+WshShell.Run "cmd /c cd /d """ & ScriptDir & """ && .venv\Scripts\python.exe miner.py --workers WORKERCOUNT", 0, False
 Set WshShell = Nothing
-"@
+'@
+    $vbsContent = $vbsContent -replace 'WORKERCOUNT', $workers
     
     $vbsPath = Join-Path $ScriptDir "run_miner_auto.vbs"
     $vbsContent | Set-Content $vbsPath
@@ -328,14 +329,15 @@ function Start-Miner {
         Start-Process -FilePath (Join-Path $ScriptDir "run_miner_auto.vbs") -WindowStyle Hidden
     } else {
         # Fallback: create on the fly
-        $vbsContent = @"
+        $vbsContent = @'
 Set WshShell = CreateObject("WScript.Shell")
 ScriptDir = CreateObject("Scripting.FileSystemObject").GetParentFolderName(WScript.ScriptFullName)
 WshShell.Run "powershell -ExecutionPolicy Bypass -File """ & ScriptDir & "\stop_miner.ps1""", 0, True
 WScript.Sleep 2000
-WshShell.Run "cmd /c cd /d """ & ScriptDir & """ && .venv\Scripts\python.exe miner.py --workers $Workers", 0, False
+WshShell.Run "cmd /c cd /d """ & ScriptDir & """ && .venv\Scripts\python.exe miner.py --workers WORKERCOUNT", 0, False
 Set WshShell = Nothing
-"@
+'@
+        $vbsContent = $vbsContent -replace 'WORKERCOUNT', $Workers
         $vbsPath = Join-Path $ScriptDir "run_miner_auto.vbs"
         $vbsContent | Set-Content $vbsPath
         Start-Process -FilePath $vbsPath -WindowStyle Hidden
@@ -389,14 +391,15 @@ while ($true) {
                 Save-MinerConfig $config
                 
                 # Recreate VBS file
-                $vbsContent = @"
+                $vbsContent = @'
 Set WshShell = CreateObject("WScript.Shell")
 ScriptDir = CreateObject("Scripting.FileSystemObject").GetParentFolderName(WScript.ScriptFullName)
 WshShell.Run "powershell -ExecutionPolicy Bypass -File """ & ScriptDir & "\stop_miner.ps1""", 0, True
 WScript.Sleep 2000
-WshShell.Run "cmd /c cd /d """ & ScriptDir & """ && .venv\Scripts\python.exe miner.py --workers $($config.Workers)", 0, False
+WshShell.Run "cmd /c cd /d """ & ScriptDir & """ && .venv\Scripts\python.exe miner.py --workers WORKERCOUNT", 0, False
 Set WshShell = Nothing
-"@
+'@
+                $vbsContent = $vbsContent -replace 'WORKERCOUNT', $config.Workers
                 $vbsPath = Join-Path $ScriptDir "run_miner_auto.vbs"
                 $vbsContent | Set-Content $vbsPath
                 
