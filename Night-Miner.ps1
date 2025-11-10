@@ -238,24 +238,24 @@ function Start-Installation {
     # Step 4: Configure workers
     Write-Info "`n[4/5] Configuring workers..."
     Write-Host ""
-    Write-Host "  How many CPU cores does this system have?"
-    Write-Host "  (Check Task Manager - Performance - CPU)"
+    Write-Host '  How many CPU cores does this system have?'
+    Write-Host '  (Check Task Manager - Performance - CPU)'
     Write-Host ""
     
-    $coreCount = Read-Host "  Enter number of cores (2 or 4 or 8 etc)"
+    $coreCount = Read-Host '  Enter number of cores (e.g. 2, 4, 8, 16)'
     
     Write-Host ""
-    Write-Host "  Resource requirements per worker:"
-    Write-Host "    CPU: ~1 core"
-    Write-Host "    RAM: ~1 GB"
-    Write-Host "    Hash Rate: ~800 H/s per worker"
+    Write-Host '  Resource requirements per worker:'
+    Write-Host '    CPU: ~1 core'
+    Write-Host '    RAM: ~1 GB'
+    Write-Host '    Hash Rate: ~800 H/s per worker'
     Write-Host ""
     
     Write-Host "  Recommendations based on $coreCount cores:"
     $recommended = [math]::Max(1, [math]::Floor($coreCount * 0.75))
-    Write-Success "    Balanced (75% CPU): $recommended workers"
-    Write-Host "    Light (50% CPU): $([math]::Max(1, [math]::Floor($coreCount * 0.5))) workers"
-    Write-Host "    Maximum (100% CPU): $coreCount workers"
+    Write-Success "    Balanced 75pct CPU: $recommended workers"
+    Write-Host "    Light 50pct CPU: $([math]::Max(1, [math]::Floor($coreCount * 0.5))) workers"
+    Write-Host "    Maximum 100pct CPU: $coreCount workers"
     Write-Host ""
     
     $workers = Read-Host "  How many workers do you want? (Recommended: $recommended)"
