@@ -178,6 +178,36 @@ Start-Sleep -Seconds 2
 
 Write-Host "`n  ✓ Miner is running in background!" -ForegroundColor Green
 Write-Host "     (Mining ends Nov 21, 2025 - airdrop cutoff)" -ForegroundColor Yellow
+
+# Fetch and display Total NIGHT earned
+if (Test-Path "wallets.json") {
+    Write-Host "`n  Fetching your NIGHT balance..." -ForegroundColor Gray
+    $wallets = Get-Content "wallets.json" | ConvertFrom-Json
+    $totalNight = 0.0
+    $successCount = 0
+    
+    foreach ($wallet in $wallets) {
+        try {
+            $response = Invoke-RestMethod -Uri "https://scavenger.prod.gd.midnighttge.io/statistics/$($wallet.address)" -Method Get -TimeoutSec 5 -ErrorAction Stop
+            $nightAllocation = $response.local.night_allocation
+            if ($nightAllocation) {
+                $night = $nightAllocation / 1000000.0
+                $totalNight += $night
+                $successCount++
+            }
+        } catch {
+            # Silently continue on error
+        }
+    }
+    
+    if ($successCount -gt 0) {
+        Write-Host "  💰 Total NIGHT Earned: $([math]::Round($totalNight, 2))" -ForegroundColor Green
+        Write-Host "     (Balance updates every 24h after 2am UTC)" -ForegroundColor DarkGray
+    } else {
+        Write-Host "  💰 Total NIGHT Earned: 0.00 (starting fresh)" -ForegroundColor Yellow
+    }
+}
+
 Write-Host "`n  📊 How to Monitor Your Mining:" -ForegroundColor White
 Write-Host "`n    PRIMARY - Interactive Dashboard (Recommended):" -ForegroundColor Green
 Write-Host "      .\Night-Miner.ps1" -ForegroundColor Cyan
