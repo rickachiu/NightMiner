@@ -1,4 +1,4 @@
-# Check Wallet Validity - Test all wallets against Midnight Network API
+﻿# Check Wallet Validity - Test all wallets against Midnight Network API
 # Run this on each machine to find invalid wallets
 
 $ErrorActionPreference = "Continue"
