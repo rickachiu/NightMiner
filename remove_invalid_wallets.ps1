@@ -1,4 +1,4 @@
-# Remove Invalid Wallets - Automatically removes wallets that failed validation
+﻿# Remove Invalid Wallets - Automatically removes wallets that failed validation
 # Run this AFTER running check_wallet_validity.ps1
 
 $ErrorActionPreference = "Stop"
