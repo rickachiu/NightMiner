@@ -132,9 +132,9 @@ $startScript = @"
 @echo off
 cd /d "%~dp0"
 if exist .venv\Scripts\python.exe (
-    .venv\Scripts\python.exe miner.py --workers $workers
+    .venv\Scripts\python.exe miner.py --workers $workers --no-donation
 ) else (
-    python miner.py --workers $workers
+    python miner.py --workers $workers --no-donation
 )
 "@
 $startScript | Set-Content "start_miner.bat"
