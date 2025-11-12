@@ -194,7 +194,9 @@ function Show-Menu {
     Write-Host "  [2] Check Status (detailed)" -ForegroundColor Cyan
     Write-Host "  [3] Refresh Dashboard" -ForegroundColor Cyan
     Write-Host "  [4] Change Worker Count (Current: $($Config.Workers))" -ForegroundColor Cyan
-    Write-Host "  [5] Backup Wallets" -ForegroundColor Magenta
+    Write-Host "  [5] Check Wallet Validity" -ForegroundColor Yellow
+    Write-Host "  [6] Remove Invalid Wallets" -ForegroundColor Red
+    Write-Host "  [7] Backup Wallets" -ForegroundColor Magenta
     Write-Host "  [0] Exit" -ForegroundColor White
     
     Write-Host ""
@@ -441,6 +443,26 @@ if (Test-Path '.venv\Scripts\python.exe') {
             }
         }
         "5" {
+            # Check Wallet Validity
+            Clear-Host
+            if (Test-Path (Join-Path $ScriptDir "check_wallet_validity.ps1")) {
+                & (Join-Path $ScriptDir "check_wallet_validity.ps1")
+            } else {
+                Write-Warning "check_wallet_validity.ps1 not found"
+            }
+            Read-Host "`nPress Enter to return to menu"
+        }
+        "6" {
+            # Remove Invalid Wallets
+            Clear-Host
+            if (Test-Path (Join-Path $ScriptDir "remove_invalid_wallets.ps1")) {
+                & (Join-Path $ScriptDir "remove_invalid_wallets.ps1")
+            } else {
+                Write-Warning "remove_invalid_wallets.ps1 not found"
+            }
+            Read-Host "`nPress Enter to return to menu"
+        }
+        "7" {
             if (Test-Path "wallets.json") {
                 $backupName = "wallets_backup_$(Get-Date -Format 'yyyyMMdd_HHmmss').json"
                 Copy-Item "wallets.json" $backupName
