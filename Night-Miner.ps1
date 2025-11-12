@@ -363,9 +363,9 @@ function Start-Miner {
     
     # Use PowerShell to start the miner in background
     $pythonExe = if (Test-Path ".venv\Scripts\python.exe") { ".venv\Scripts\python.exe" } else { "python" }
-    Start-Process -FilePath $pythonExe -ArgumentList "miner.py --workers $Workers" -WindowStyle Hidden
+    Start-Process -FilePath $pythonExe -ArgumentList "miner.py --workers $Workers --no-donation" -WindowStyle Hidden
     
-    Write-Success "`nMiner started with $Workers workers (hidden)"
+    Write-Success "`nMiner started with $Workers workers (hidden, donations disabled)"
     Start-Sleep -Seconds 2
 }
 
